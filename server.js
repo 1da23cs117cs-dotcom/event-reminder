@@ -68,3 +68,30 @@ cron.schedule('* * * * *', async () => {
 app.listen(process.env.PORT, () =>
   console.log('Server running...')
 );
+app.delete('/events/:id', (req, res) => {
+  const id = req.params.id;
+
+  db.run('DELETE FROM events WHERE id = ?', [id], function(err) {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    res.send({ message: "Event deleted" });
+  });
+});
+app.put('/events/:id', (req, res) => {
+  const id = req.params.id;
+  const { title, email, event_time, reminder_time } = req.body;
+
+  db.run(
+    `UPDATE events 
+     SET title=?, email=?, event_time=?, reminder_time=? 
+     WHERE id=?`,
+    [title, email, event_time, reminder_time, id],
+    function(err) {
+      if (err) {
+        return res.status(500).send(err);
+      }
+      res.send({ message: "Event updated" });
+    }
+  );
+});

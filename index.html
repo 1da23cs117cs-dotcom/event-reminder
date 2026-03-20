@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Event Reminder</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #0f172a, #1e293b);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 15px;
+      width: 350px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 90%;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+    }
+
+    button {
+      width: 95%;
+      padding: 12px;
+      background: #38bdf8;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #0ea5e9;
+    }
+
+    #events {
+      margin-top: 20px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .card {
+      background: #334155;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      text-align: left;
+    }
+
+    .card h3 {
+      margin: 0;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #cbd5f5;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>📅 Event Reminder</h2>
+
+  <input id="title" placeholder="Title"><br>
+  <input id="email" placeholder="Email"><br>
+  <input id="event_time" type="datetime-local"><br>
+  <input id="reminder_time" type="datetime-local"><br>
+
+  <button onclick="addEvent()">Add Event</button>
+
+  <div id="events"></div>
+</div>
+
+<script>
+const API = "https://event-reminder-sg2s.onrender.com/events";
+
+async function addEvent() {
+  await fetch(API, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      title: title.value,
+      email: email.value,
+      event_time: event_time.value,
+      reminder_time: reminder_time.value
+    })
+  });
+
+  alert('✅ Event added!');
+  loadEvents();
+}
+
+async function loadEvents() {
+  const res = await fetch(API);
+  const data = await res.json();
+
+  const container = document.getElementById("events");
+  container.innerHTML = "";
+
+  data.reverse().forEach(e => {
+    container.innerHTML += `
+      <div class="card">
+        <h3>${e.title}</h3>
+        <div class="small">📧 ${e.email}</div>
+        <div class="small">📅 ${new Date(e.event_time).toLocaleString()}</div>
+        <div class="small">⏰ Reminder: ${new Date(e.reminder_time).toLocaleString()}</div>
+      </div>
+    `;
+  });
+}
+
+window.onload = loadEvents;
+</script>
+
+</body>
+</html>
