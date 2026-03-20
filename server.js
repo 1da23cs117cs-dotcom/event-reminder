@@ -68,32 +68,32 @@ cron.schedule('* * * * *', async () => {
 app.listen(process.env.PORT, () =>
   console.log('Server running...')
 );
-app.delete('/events/:id', (req, res) => {
+app.delete('/events/:id', async (req, res) => {
   const id = req.params.id;
 
-  db.run('DELETE FROM events WHERE id = ?', [id], function(err) {
-    if (err) {
-      return res.status(500).send(err);
-    }
-    res.send({ message: "Event deleted" });
-  });
+  try {
+    await pool.query('DELETE FROM events WHERE id=$1', [id]);
+    res.json({ message: "Event deleted" });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
-app.put('/events/:id', (req, res) => {
+app.put('/events/:id', async (req, res) => {
   const id = req.params.id;
   const { title, email, event_time, reminder_time } = req.body;
 
-  db.run(
-    `UPDATE events 
-     SET title=?, email=?, event_time=?, reminder_time=? 
-     WHERE id=?`,
-    [title, email, event_time, reminder_time, id],
-    function(err) {
-      if (err) {
-        return res.status(500).send(err);
-      }
-      res.send({ message: "Event updated" });
-    }
-  );
+  try {
+    await pool.query(
+      `UPDATE events 
+       SET title=$1, email=$2, event_time=$3, reminder_time=$4 
+       WHERE id=$5`,
+      [title, email, event_time, reminder_time, id]
+    );
+
+    res.json({ message: "Event updated" });
+  } catch (err) {
+    res.status(500).send(err);
+  }
 });
 app.get('/', (req, res) => {
   res.send('🚀 Event Reminder Backend is running!');
