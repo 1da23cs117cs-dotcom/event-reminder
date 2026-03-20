@@ -1,79 +1,81 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Event Reminder</title>
+<title>Event Reminder</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #0f172a, #1e293b);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
 
-    .container {
-      background: #1e293b;
-      padding: 25px;
-      border-radius: 15px;
-      width: 350px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      text-align: center;
-    }
+.container {
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 15px;
+  width: 320px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.5);
+  color: white;
+}
 
-    h2 {
-      margin-bottom: 20px;
-    }
+h2 {
+  text-align: center;
+}
 
-    input {
-      width: 90%;
-      margin: 8px 0;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-    }
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border: none;
+}
 
-    button {
-      width: 95%;
-      padding: 12px;
-      background: #38bdf8;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
+button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #38bdf8;
+  color: white;
+  cursor: pointer;
+}
 
-    button:hover {
-      background: #0ea5e9;
-    }
+button:hover {
+  background: #0ea5e9;
+}
 
-    #events {
-      margin-top: 20px;
-      max-height: 250px;
-      overflow-y: auto;
-    }
+.event {
+  background: #334155;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+}
 
-    .card {
-      background: #334155;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 10px;
-      text-align: left;
-    }
+.actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 5px;
+}
 
-    .card h3 {
-      margin: 0;
-    }
+.actions button {
+  flex: 1;
+  font-size: 12px;
+}
 
-    .small {
-      font-size: 12px;
-      color: #cbd5f5;
-    }
-  </style>
+.delete {
+  background: #ef4444;
+}
+
+.edit {
+  background: #22c55e;
+}
+</style>
 </head>
 
 <body>
@@ -81,10 +83,10 @@
 <div class="container">
   <h2>📅 Event Reminder</h2>
 
-  <input id="title" placeholder="Title"><br>
-  <input id="email" placeholder="Email"><br>
-  <input id="event_time" type="datetime-local"><br>
-  <input id="reminder_time" type="datetime-local"><br>
+  <input id="title" placeholder="Title">
+  <input id="email" placeholder="Email">
+  <input id="event_time" type="datetime-local">
+  <input id="reminder_time" type="datetime-local">
 
   <button onclick="addEvent()">Add Event</button>
 
@@ -94,21 +96,7 @@
 <script>
 const API = "https://event-reminder-sg2s.onrender.com/events";
 
-async function addEvent() {
-  await fetch(API, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      title: title.value,
-      email: email.value,
-      event_time: event_time.value,
-      reminder_time: reminder_time.value
-    })
-  });
-
-  alert('✅ Event added!');
-  loadEvents();
-}
+let editId = null;
 
 async function loadEvents() {
   const res = await fetch(API);
@@ -117,19 +105,83 @@ async function loadEvents() {
   const container = document.getElementById("events");
   container.innerHTML = "";
 
-  data.reverse().forEach(e => {
+  data.forEach(e => {
     container.innerHTML += `
-      <div class="card">
-        <h3>${e.title}</h3>
-        <div class="small">📧 ${e.email}</div>
-        <div class="small">📅 ${new Date(e.event_time).toLocaleString()}</div>
-        <div class="small">⏰ Reminder: ${new Date(e.reminder_time).toLocaleString()}</div>
+      <div class="event">
+        <b>${e.title}</b><br>
+        📧 ${e.email}<br>
+        ⏰ ${new Date(e.event_time).toLocaleString()}<br>
+        🔔 ${new Date(e.reminder_time).toLocaleString()}
+
+        <div class="actions">
+          <button class="edit" onclick="editEvent(${e.id})">Edit</button>
+          <button class="delete" onclick="deleteEvent(${e.id})">Delete</button>
+        </div>
       </div>
     `;
   });
 }
 
-window.onload = loadEvents;
+async function addEvent() {
+  const body = {
+    title: title.value,
+    email: email.value,
+    event_time: event_time.value,
+    reminder_time: reminder_time.value
+  };
+
+  if (editId) {
+    // UPDATE
+    await fetch(`${API}/${editId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    editId = null;
+  } else {
+    // CREATE
+    await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+  }
+
+  clearForm();
+  loadEvents();
+}
+
+function editEvent(id) {
+  editId = id;
+
+  fetch(`${API}`)
+    .then(res => res.json())
+    .then(data => {
+      const e = data.find(x => x.id === id);
+
+      title.value = e.title;
+      email.value = e.email;
+      event_time.value = e.event_time.slice(0,16);
+      reminder_time.value = e.reminder_time.slice(0,16);
+    });
+}
+
+async function deleteEvent(id) {
+  await fetch(`${API}/${id}`, {
+    method: "DELETE"
+  });
+
+  loadEvents();
+}
+
+function clearForm() {
+  title.value = "";
+  email.value = "";
+  event_time.value = "";
+  reminder_time.value = "";
+}
+
+loadEvents();
 </script>
 
 </body>

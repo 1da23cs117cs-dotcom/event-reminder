@@ -95,3 +95,6 @@ app.put('/events/:id', (req, res) => {
     }
   );
 });
+app.get('/', (req, res) => {
+  res.send('🚀 Event Reminder Backend is running!');
+});
