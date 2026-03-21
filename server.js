@@ -5,7 +5,9 @@ const { Pool } = require('pg');
 const cron = require('node-cron');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: "*"
+}));
 app.use(express.json());
 
 const pool = new Pool({
