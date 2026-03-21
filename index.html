@@ -229,6 +229,9 @@ async function deleteEvent(id) {
   });
 
   loadEvents();
+  if (data.length === 0) {
+  container.innerHTML = "<p>No events yet</p>";
+}
 }
 
 function clearForm() {
