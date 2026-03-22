@@ -179,8 +179,8 @@ async function addEvent() {
   const body = {
     title: title.value,
     email: email.value,
-    event_time: event_time.value,
-    reminder_time: reminder_time.value
+    event_time: new Date(event_time.value).toISOString(),
+    reminder_time: new Date(reminder_time.value).toISOString()
   };
 
   if (!title.value || !email.value) {
@@ -218,8 +218,15 @@ function editEvent(id) {
 
       title.value = e.title;
       email.value = e.email;
-      event_time.value = e.event_time.slice(0,16);
-      reminder_time.value = e.reminder_time.slice(0,16);
+      event_time.value = new Date(e.event_time)
+         .toLocaleString('sv-SE')
+         .replace(' ', 'T')
+         .slice(0,16);
+
+      reminder_time.value = new Date(e.reminder_time)
+         .toLocaleString('sv-SE')
+         .replace(' ', 'T')
+         .slice(0,16);
     });
 }
 
@@ -229,9 +236,8 @@ async function deleteEvent(id) {
   });
 
   loadEvents();
-  if (data.length === 0) {
-  container.innerHTML = "<p>No events yet</p>";
-}
+ 
+
 }
 
 function clearForm() {
