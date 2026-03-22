@@ -7,8 +7,9 @@ const nodemailer = require('nodemailer');
 
 const app = express();
 app.use(cors({
-  origin: "*"
+  origin: "https://event-reminder-frontend-dwng.onrender.com"
 }));
+
 app.use(express.json());
 
 const pool = new Pool({
@@ -66,20 +67,25 @@ cron.schedule('* * * * *', async () => {
   );
 
   for (let event of result.rows) {
+  try {
     await transporter.sendMail({
-  from: process.env.EMAIL_USER,
-  to: event.email,
-  subject: "⏰ Event Reminder",
-  text: `Reminder: ${event.title} is scheduled soon!`
-});
+      from: process.env.EMAIL_USER,
+      to: event.email,
+      subject: "⏰ Event Reminder",
+      text: `Reminder: ${event.title} is scheduled soon!`
+    });
 
-console.log(`📧 Email sent to ${event.email}`);
+    console.log(`📧 Email sent to ${event.email}`);
 
     await pool.query(
       'UPDATE events SET notified=true WHERE id=$1',
       [event.id]
     );
+
+  } catch (err) {
+    console.error("Email failed:", err.message);
   }
+}
 });
 
 const PORT = process.env.PORT || 5000;
