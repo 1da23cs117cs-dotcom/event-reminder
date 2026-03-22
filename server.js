@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const cron = require('node-cron');
+const nodemailer = require('nodemailer');
 
 const app = express();
 app.use(cors({
@@ -13,6 +14,13 @@ app.use(express.json());
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
+});
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
 });
 
 // Create table
@@ -58,7 +66,14 @@ cron.schedule('* * * * *', async () => {
   );
 
   for (let event of result.rows) {
-    console.log(`Reminder: ${event.title}`);
+    await transporter.sendMail({
+  from: process.env.EMAIL_USER,
+  to: event.email,
+  subject: "⏰ Event Reminder",
+  text: `Reminder: ${event.title} is scheduled soon!`
+});
+
+console.log(`📧 Email sent to ${event.email}`);
 
     await pool.query(
       'UPDATE events SET notified=true WHERE id=$1',
