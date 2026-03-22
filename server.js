@@ -30,6 +30,7 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS
   }
 });
+console.log("SMTP FIX APPLIED");
 
 // ✅ Create table (auto)
 (async () => {
