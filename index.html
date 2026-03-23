@@ -16,12 +16,12 @@ body {
 
 /* Container */
 .container {
-  background: rgba(30, 41, 59, 0.9);
-  backdrop-filter: blur(10px);
+  background: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(15px);
   padding: 25px;
-  border-radius: 16px;
-  width: 350px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  border-radius: 20px;
+  width: 380px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
   color: white;
 }
 
@@ -34,13 +34,18 @@ h2 {
 /* Inputs */
 input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin: 6px 0;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  background: #0f172a;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  background: #020617;
   color: white;
+  transition: 0.2s;
+}
+
+input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
 }
 
 input::placeholder {
@@ -50,10 +55,10 @@ input::placeholder {
 /* Button */
 button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin-top: 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: linear-gradient(90deg, #38bdf8, #0ea5e9);
   color: white;
   cursor: pointer;
@@ -62,7 +67,7 @@ button {
 }
 
 button:hover {
-  transform: scale(1.03);
+  transform: scale(1.05);
 }
 
 /* Success message */
@@ -77,15 +82,17 @@ button:hover {
 
 /* Event Card */
 .event {
-  background: #334155;
-  padding: 12px;
+  background: linear-gradient(145deg, #1e293b, #334155);
+  padding: 14px;
   margin-top: 12px;
-  border-radius: 10px;
-  transition: 0.2s;
+  border-radius: 12px;
+  transition: 0.3s;
+  border: 1px solid #475569;
 }
 
 .event:hover {
-  transform: scale(1.02);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
 }
 
 /* Title bold */
@@ -126,6 +133,20 @@ button:hover {
   max-height: 250px;
   overflow-y: auto;
 }
+.event {
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
 </style>
 </head>
 
@@ -133,6 +154,10 @@ button:hover {
 
 <div class="container">
   <h2>📅 Event Reminder</h2>
+
+  <p style="text-align:center; color:#94a3b8;">
+    Never miss your important events
+  </p>
 
   <input id="title" placeholder="Event Title">
   <input id="email" placeholder="Email">
