@@ -13,6 +13,26 @@
 
   <hr>
 
+  <!-- 📊 STATS -->
+  <h3>📊 Stats</h3>
+  <div class="stats">
+    <div class="stat-box">
+      <h4>Total</h4>
+      <p id="totalEvents">0</p>
+    </div>
+    <div class="stat-box">
+      <h4>Upcoming</h4>
+      <p id="upcomingEvents">0</p>
+    </div>
+    <div class="stat-box">
+      <h4>Past</h4>
+      <p id="pastEvents">0</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ADD / EDIT -->
   <h3>Add / Edit Event</h3>
 
   <input id="title" placeholder="Event Title">
@@ -20,10 +40,11 @@
   <input id="etime" type="datetime-local">
   <input id="rtime" type="datetime-local">
 
-  <button onclick="addEvent()">Save Event</button>
+  <button onclick="saveEvent()">Save Event</button>
 
   <hr>
 
+  <!-- EVENTS -->
   <h3>Your Events</h3>
   <div id="events"></div>
 </div>

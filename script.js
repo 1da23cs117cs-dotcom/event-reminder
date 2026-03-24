@@ -1,9 +1,12 @@
 const API = "https://event-reminder-sg2s.onrender.com";
 
+let editId = null;
+
 // ================= AUTH =================
+
 async function signup() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const email = emailInput();
+  const password = passwordInput();
 
   const res = await fetch(API + "/signup", {
     method: "POST",
@@ -12,12 +15,12 @@ async function signup() {
   });
 
   const data = await res.json();
-  alert(res.ok ? "Signup successful ✅" : data.error);
+  alert(data.message || data.error);
 }
 
 async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const email = emailInput();
+  const password = passwordInput();
 
   const res = await fetch(API + "/login", {
     method: "POST",
@@ -29,28 +32,21 @@ async function login() {
 
   if (res.ok) {
     localStorage.setItem("token", data.token);
-    alert("Login successful ✅");
-
     window.location.href = "dashboard.html";
   } else {
     alert(data.error);
   }
 }
 
-// ================= LOGOUT =================
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "index.html";
 }
 
-// ================= ADD / UPDATE =================
-async function addEvent() {
-  const token = localStorage.getItem("token");
+// ================= EVENTS =================
 
-  if (!token) {
-    alert("Login first ❌");
-    return;
-  }
+async function saveEvent() {
+  const token = localStorage.getItem("token");
 
   const body = {
     title: document.getElementById("title").value,
@@ -62,8 +58,8 @@ async function addEvent() {
   let url = API + "/events";
   let method = "POST";
 
-  if (window.editId) {
-    url = API + "/events/" + window.editId;
+  if (editId) {
+    url = API + "/events/" + editId;
     method = "PUT";
   }
 
@@ -76,23 +72,12 @@ async function addEvent() {
     body: JSON.stringify(body)
   });
 
-  if (res.ok) {
-    alert(window.editId ? "Updated ✅" : "Added ✅");
-
-    document.getElementById("title").value = "";
-    document.getElementById("remail").value = "";
-    document.getElementById("etime").value = "";
-    document.getElementById("rtime").value = "";
-
-    window.editId = null;
-
-    loadEvents();
-  } else {
-    alert("Error ❌");
-  }
+  alert("Saved!");
+  editId = null;
+  clearForm();
+  loadEvents();
 }
 
-// ================= LOAD EVENTS =================
 async function loadEvents() {
   const token = localStorage.getItem("token");
   if (!token) return;
@@ -108,63 +93,79 @@ async function loadEvents() {
 
   div.innerHTML = "";
 
-  if (!Array.isArray(data)) {
-    console.log("Error:", data);
-    return;
-  }
+  let total = 0, upcoming = 0, past = 0;
 
   data.forEach(e => {
+    total++;
+
+    const now = new Date();
+    const eventDate = new Date(e.event_time);
+
+    if (eventDate > now) upcoming++;
+    else past++;
+
     div.innerHTML += `
       <div class="event">
         <b>${e.title}</b><br>
-        ${new Date(e.event_time).toLocaleString()}<br><br>
+        ${eventDate.toLocaleString()}<br><br>
 
-        <button onclick="editEvent(${e.id}, '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')">
-          Edit
-        </button>
-
-        <button onclick="deleteEvent(${e.id})">
-          Delete
-        </button>
+        <button onclick="editEvent(${e.id}, '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')">Edit</button>
+        <button onclick="deleteEvent(${e.id})">Delete</button>
       </div>
     `;
   });
+
+  // STATS
+  setText("totalEvents", total);
+  setText("upcomingEvents", upcoming);
+  setText("pastEvents", past);
 }
 
-// ================= DELETE =================
+function editEvent(id, title, email, etime, rtime) {
+  editId = id;
+
+  document.getElementById("title").value = title;
+  document.getElementById("remail").value = email;
+  document.getElementById("etime").value = formatDate(etime);
+  document.getElementById("rtime").value = formatDate(rtime);
+}
+
 async function deleteEvent(id) {
   const token = localStorage.getItem("token");
 
-  if (!confirm("Delete this event?")) return;
-
-  const res = await fetch(API + "/events/" + id, {
+  await fetch(API + "/events/" + id, {
     method: "DELETE",
     headers: { Authorization: "Bearer " + token }
   });
 
-  if (res.ok) {
-    alert("Deleted ✅");
-    loadEvents();
-  } else {
-    alert("Delete failed ❌");
-  }
-}
-
-// ================= EDIT =================
-function editEvent(id, title, email, event_time, reminder_time) {
-  document.getElementById("title").value = title;
-  document.getElementById("remail").value = email;
-
-  document.getElementById("etime").value =
-    new Date(event_time).toISOString().slice(0,16);
-
-  document.getElementById("rtime").value =
-    new Date(reminder_time).toISOString().slice(0,16);
-
-  window.editId = id;
-}
-
-// ================= AUTO LOAD =================
-if (window.location.pathname.includes("dashboard")) {
   loadEvents();
 }
+
+// ================= HELPERS =================
+
+function emailInput() {
+  return document.getElementById("email").value;
+}
+
+function passwordInput() {
+  return document.getElementById("password").value;
+}
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = value;
+}
+
+function clearForm() {
+  ["title", "remail", "etime", "rtime"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+}
+
+function formatDate(date) {
+  return new Date(date).toISOString().slice(0,16);
+}
+
+// AUTO LOAD
+loadEvents();
