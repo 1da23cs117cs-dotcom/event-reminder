@@ -151,16 +151,27 @@ app.post("/events", auth, async (req, res) => {
   try {
     const { title, email, event_time, reminder_time } = req.body;
 
+    if (!title || !email || !event_time || !reminder_time) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+
     const result = await pool.query(
       `INSERT INTO events (user_id, title, email, event_time, reminder_time)
        VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [req.user.id, title, email, event_time, reminder_time]
+      [
+        req.user.id,
+        title,
+        email,
+        new Date(event_time),
+        new Date(reminder_time)
+      ]
     );
 
     res.json(result.rows[0]);
+
   } catch (err) {
-    console.log("ADD ERROR:", err.message);
-    res.status(500).json({ error: "Insert failed" });
+    console.log("INSERT ERROR:", err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 

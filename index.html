@@ -148,19 +148,21 @@ async function addEvent() {
 // ================= LOAD EVENTS =================
 async function loadEvents() {
   const token = localStorage.getItem("token");
-
   if (!token) return;
 
   const res = await fetch(API + "/events", {
-    headers: {
-      "Authorization": "Bearer " + token
-    }
+    headers: { Authorization: "Bearer " + token }
   });
 
   const data = await res.json();
 
   const div = document.getElementById("events");
   div.innerHTML = "";
+
+  if (!Array.isArray(data)) {
+    console.log("Not array:", data);
+    return; // 👈 prevents crash
+  }
 
   data.forEach(e => {
     div.innerHTML += `
