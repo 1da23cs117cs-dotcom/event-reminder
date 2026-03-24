@@ -1,12 +1,49 @@
 const API = "https://event-reminder-sg2s.onrender.com";
 
+// ================= AUTH =================
+async function signup() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch(API + "/signup", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+  alert(res.ok ? "Signup successful ✅" : data.error);
+}
+
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch(API + "/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem("token", data.token);
+    alert("Login successful ✅");
+
+    window.location.href = "dashboard.html";
+  } else {
+    alert(data.error);
+  }
+}
+
 // ================= LOGOUT =================
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "index.html";
 }
 
-// ================= ADD / UPDATE EVENT =================
+// ================= ADD / UPDATE =================
 async function addEvent() {
   const token = localStorage.getItem("token");
 
@@ -25,7 +62,6 @@ async function addEvent() {
   let url = API + "/events";
   let method = "POST";
 
-  // ✅ If editing
   if (window.editId) {
     url = API + "/events/" + window.editId;
     method = "PUT";
@@ -43,7 +79,6 @@ async function addEvent() {
   if (res.ok) {
     alert(window.editId ? "Updated ✅" : "Added ✅");
 
-    // clear form
     document.getElementById("title").value = "";
     document.getElementById("remail").value = "";
     document.getElementById("etime").value = "";
@@ -69,6 +104,8 @@ async function loadEvents() {
   const data = await res.json();
 
   const div = document.getElementById("events");
+  if (!div) return;
+
   div.innerHTML = "";
 
   if (!Array.isArray(data)) {
@@ -127,5 +164,7 @@ function editEvent(id, title, email, event_time, reminder_time) {
   window.editId = id;
 }
 
-// ================= LOAD ON START =================
-loadEvents();
+// ================= AUTO LOAD =================
+if (window.location.pathname.includes("dashboard")) {
+  loadEvents();
+}
