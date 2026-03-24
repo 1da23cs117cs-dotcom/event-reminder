@@ -2,20 +2,44 @@ body {
   margin: 0;
   font-family: 'Segoe UI';
   background: linear-gradient(135deg, #0f172a, #1e293b);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-
-.container {
-  background: rgba(30, 41, 59, 0.9);
-  padding: 20px;
-  border-radius: 20px;
-  width: 350px;
   color: white;
 }
 
+/* LAYOUT */
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px;
+  background: #020617;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar h2 {
+  text-align: center;
+}
+
+.sidebar button {
+  margin: 10px 0;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #38bdf8;
+  cursor: pointer;
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 20px;
+}
+
+/* INPUTS */
 input, button {
   width: 100%;
   padding: 10px;
@@ -29,11 +53,7 @@ input {
   color: white;
 }
 
-button {
-  background: #38bdf8;
-  cursor: pointer;
-}
-
+/* EVENT CARD */
 .event {
   background: #020617;
   padding: 10px;
@@ -50,7 +70,13 @@ button {
 .stat-box {
   flex: 1;
   background: #020617;
-  padding: 10px;
+  padding: 15px;
   border-radius: 10px;
   text-align: center;
+}
+
+/* HOVER EFFECT */
+button:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
 }

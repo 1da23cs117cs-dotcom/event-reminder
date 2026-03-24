@@ -6,47 +6,63 @@
 </head>
 <body>
 
-<div class="container">
-  <h2>📅 Dashboard</h2>
+<div class="layout">
 
-  <button onclick="logout()">Logout</button>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>📅</h2>
 
-  <hr>
+    <button onclick="showSection('stats')">📊 Dashboard</button>
+    <button onclick="showSection('add')">➕ Add Event</button>
+    <button onclick="showSection('events')">📋 View Events</button>
 
-  <!-- 📊 STATS -->
-  <h3>📊 Stats</h3>
-  <div class="stats">
-    <div class="stat-box">
-      <h4>Total</h4>
-      <p id="totalEvents">0</p>
-    </div>
-    <div class="stat-box">
-      <h4>Upcoming</h4>
-      <p id="upcomingEvents">0</p>
-    </div>
-    <div class="stat-box">
-      <h4>Past</h4>
-      <p id="pastEvents">0</p>
-    </div>
+    <button onclick="logout()">🚪 Logout</button>
   </div>
 
-  <hr>
+  <!-- MAIN -->
+  <div class="main">
 
-  <!-- ADD / EDIT -->
-  <h3>Add / Edit Event</h3>
+    <!-- STATS -->
+    <div id="statsSection" class="section">
+      <h2>📊 Stats</h2>
 
-  <input id="title" placeholder="Event Title">
-  <input id="remail" placeholder="Reminder Email">
-  <input id="etime" type="datetime-local">
-  <input id="rtime" type="datetime-local">
+      <div class="stats">
+        <div class="stat-box">
+          <h4>Total</h4>
+          <p id="totalEvents">0</p>
+        </div>
 
-  <button onclick="saveEvent()">Save Event</button>
+        <div class="stat-box">
+          <h4>Upcoming</h4>
+          <p id="upcomingEvents">0</p>
+        </div>
 
-  <hr>
+        <div class="stat-box">
+          <h4>Past</h4>
+          <p id="pastEvents">0</p>
+        </div>
+      </div>
+    </div>
 
-  <!-- EVENTS -->
-  <h3>Your Events</h3>
-  <div id="events"></div>
+    <!-- ADD / EDIT -->
+    <div id="addSection" class="section" style="display:none;">
+      <h2>Add / Edit Event</h2>
+
+      <input id="title" placeholder="Event Title">
+      <input id="remail" placeholder="Reminder Email">
+      <input id="etime" type="datetime-local">
+      <input id="rtime" type="datetime-local">
+
+      <button onclick="saveEvent()">Save Event</button>
+    </div>
+
+    <!-- EVENTS -->
+    <div id="eventsSection" class="section" style="display:none;">
+      <h2>Your Events</h2>
+      <div id="events"></div>
+    </div>
+
+  </div>
 </div>
 
 <script src="script.js"></script>

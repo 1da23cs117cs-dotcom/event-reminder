@@ -2,49 +2,33 @@ const API = "https://event-reminder-sg2s.onrender.com";
 
 let editId = null;
 
-// ================= AUTH =================
+// ================= NAVIGATION =================
+function showSection(section) {
+  document.getElementById("statsSection").style.display = "none";
+  document.getElementById("addSection").style.display = "none";
+  document.getElementById("eventsSection").style.display = "none";
 
-async function signup() {
-  const email = emailInput();
-  const password = passwordInput();
+  if (section === "stats") {
+    document.getElementById("statsSection").style.display = "block";
+  }
 
-  const res = await fetch(API + "/signup", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ email, password })
-  });
+  if (section === "add") {
+    document.getElementById("addSection").style.display = "block";
+  }
 
-  const data = await res.json();
-  alert(data.message || data.error);
-}
-
-async function login() {
-  const email = emailInput();
-  const password = passwordInput();
-
-  const res = await fetch(API + "/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await res.json();
-
-  if (res.ok) {
-    localStorage.setItem("token", data.token);
-    window.location.href = "dashboard.html";
-  } else {
-    alert(data.error);
+  if (section === "events") {
+    document.getElementById("eventsSection").style.display = "block";
+    loadEvents();
   }
 }
 
+// ================= LOGOUT =================
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "index.html";
 }
 
-// ================= EVENTS =================
-
+// ================= SAVE EVENT =================
 async function saveEvent() {
   const token = localStorage.getItem("token");
 
@@ -63,7 +47,7 @@ async function saveEvent() {
     method = "PUT";
   }
 
-  const res = await fetch(url, {
+  await fetch(url, {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -78,6 +62,7 @@ async function saveEvent() {
   loadEvents();
 }
 
+// ================= LOAD EVENTS =================
 async function loadEvents() {
   const token = localStorage.getItem("token");
   if (!token) return;
@@ -89,8 +74,6 @@ async function loadEvents() {
   const data = await res.json();
 
   const div = document.getElementById("events");
-  if (!div) return;
-
   div.innerHTML = "";
 
   let total = 0, upcoming = 0, past = 0;
@@ -115,12 +98,12 @@ async function loadEvents() {
     `;
   });
 
-  // STATS
-  setText("totalEvents", total);
-  setText("upcomingEvents", upcoming);
-  setText("pastEvents", past);
+  document.getElementById("totalEvents").innerText = total;
+  document.getElementById("upcomingEvents").innerText = upcoming;
+  document.getElementById("pastEvents").innerText = past;
 }
 
+// ================= EDIT =================
 function editEvent(id, title, email, etime, rtime) {
   editId = id;
 
@@ -128,8 +111,11 @@ function editEvent(id, title, email, etime, rtime) {
   document.getElementById("remail").value = email;
   document.getElementById("etime").value = formatDate(etime);
   document.getElementById("rtime").value = formatDate(rtime);
+
+  showSection("add");
 }
 
+// ================= DELETE =================
 async function deleteEvent(id) {
   const token = localStorage.getItem("token");
 
@@ -142,30 +128,16 @@ async function deleteEvent(id) {
 }
 
 // ================= HELPERS =================
-
-function emailInput() {
-  return document.getElementById("email").value;
-}
-
-function passwordInput() {
-  return document.getElementById("password").value;
-}
-
-function setText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.innerText = value;
-}
-
 function clearForm() {
-  ["title", "remail", "etime", "rtime"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = "";
-  });
+  document.getElementById("title").value = "";
+  document.getElementById("remail").value = "";
+  document.getElementById("etime").value = "";
+  document.getElementById("rtime").value = "";
 }
 
 function formatDate(date) {
   return new Date(date).toISOString().slice(0,16);
 }
 
-// AUTO LOAD
+// AUTO LOAD STATS
 loadEvents();
