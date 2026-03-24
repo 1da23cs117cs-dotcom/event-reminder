@@ -6,63 +6,52 @@
 </head>
 <body>
 
-<div class="layout">
+<div class="main">
 
   <!-- SIDEBAR -->
   <div class="sidebar">
     <h2>📅</h2>
 
-    <button onclick="showSection('stats')">📊 Dashboard</button>
+    <button onclick="showSection('dashboard')">📊 Dashboard</button>
     <button onclick="showSection('add')">➕ Add Event</button>
-    <button onclick="showSection('events')">📋 View Events</button>
-
+    <button onclick="showSection('view')">📋 View Events</button>
     <button onclick="logout()">🚪 Logout</button>
   </div>
 
-  <!-- MAIN -->
-  <div class="main">
+  <!-- CONTENT -->
+  <div class="content">
 
-    <!-- STATS -->
-    <div id="statsSection" class="section">
+    <!-- DASHBOARD -->
+    <div id="dashboardSection">
       <h2>📊 Stats</h2>
 
       <div class="stats">
-        <div class="stat-box">
-          <h4>Total</h4>
-          <p id="totalEvents">0</p>
-        </div>
-
-        <div class="stat-box">
-          <h4>Upcoming</h4>
-          <p id="upcomingEvents">0</p>
-        </div>
-
-        <div class="stat-box">
-          <h4>Past</h4>
-          <p id="pastEvents">0</p>
-        </div>
+        <div class="card">Total<br><span id="total">0</span></div>
+        <div class="card">Upcoming<br><span id="upcoming">0</span></div>
+        <div class="card">Past<br><span id="past">0</span></div>
       </div>
     </div>
 
-    <!-- ADD / EDIT -->
-    <div id="addSection" class="section" style="display:none;">
-      <h2>Add / Edit Event</h2>
+    <!-- ADD EVENT -->
+    <div id="addSection" style="display:none;">
+      <h2>Add Event</h2>
 
       <input id="title" placeholder="Event Title">
       <input id="remail" placeholder="Reminder Email">
       <input id="etime" type="datetime-local">
       <input id="rtime" type="datetime-local">
 
-      <button onclick="saveEvent()">Save Event</button>
+      <button onclick="addEvent()">Save Event</button>
     </div>
 
-    <!-- EVENTS -->
-    <div id="eventsSection" class="section" style="display:none;">
+    <!-- VIEW EVENTS -->
+    <div id="viewSection" style="display:none;">
       <h2>Your Events</h2>
       <div id="events"></div>
     </div>
 
   </div>
+
 </div>
 
 <script src="script.js"></script>
