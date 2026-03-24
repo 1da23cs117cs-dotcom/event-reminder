@@ -15,11 +15,15 @@ body {
 }
 
 .container {
-  background: rgba(30, 41, 59, 0.85);
+  background: rgba(30, 41, 59, 0.9);
   padding: 25px;
   border-radius: 20px;
   width: 380px;
   color: white;
+}
+
+h2 {
+  text-align: center;
 }
 
 input, button {
@@ -36,7 +40,8 @@ input {
 }
 
 button {
-  background: #38bdf8;
+  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+  color: white;
   cursor: pointer;
 }
 
@@ -49,10 +54,12 @@ button {
 
 .actions {
   margin-top: 5px;
+  display: flex;
+  gap: 5px;
 }
 
-.delete { background: red; }
-.edit { background: green; }
+.delete { background: #ef4444; }
+.edit { background: #22c55e; }
 </style>
 </head>
 
@@ -61,15 +68,16 @@ button {
 <div class="container">
   <h2>📅 Event Reminder</h2>
 
-  <!-- AUTH -->
+  <!-- 🔐 AUTH -->
   <input id="authEmail" placeholder="Email">
   <input id="authPassword" type="password" placeholder="Password">
+
   <button onclick="signup()">Signup</button>
   <button onclick="login()">Login</button>
 
   <hr>
 
-  <!-- EVENT -->
+  <!-- 📅 EVENT -->
   <input id="title" placeholder="Event Title">
   <input id="email" placeholder="Reminder Email">
   <input id="event_time" type="datetime-local">
@@ -85,7 +93,7 @@ const API = "https://event-reminder-sg2s.onrender.com";
 
 let editId = null;
 
-// 🔐 TOKEN HELPER (IMPORTANT)
+// ✅ TOKEN HEADER FIX (IMPORTANT)
 function getHeaders() {
   return {
     "Content-Type": "application/json",
@@ -93,11 +101,11 @@ function getHeaders() {
   };
 }
 
-// SIGNUP
+// 🔐 SIGNUP
 async function signup() {
   const res = await fetch(API + "/signup", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email: authEmail.value,
       password: authPassword.value
@@ -108,11 +116,11 @@ async function signup() {
   alert(data.message || data.error);
 }
 
-// LOGIN
+// 🔐 LOGIN
 async function login() {
   const res = await fetch(API + "/login", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email: authEmail.value,
       password: authPassword.value
@@ -130,18 +138,19 @@ async function login() {
   }
 }
 
-// LOAD EVENTS
+// 📦 LOAD EVENTS
 async function loadEvents() {
   const res = await fetch(API + "/events", {
     headers: getHeaders()
   });
 
   if (!res.ok) {
-    alert("Please login first ❌");
+    alert("Login required ❌");
     return;
   }
 
   const data = await res.json();
+
   const container = document.getElementById("events");
   container.innerHTML = "";
 
@@ -162,7 +171,7 @@ async function loadEvents() {
   });
 }
 
-// ADD / UPDATE
+// ➕ ADD / UPDATE EVENT
 async function addEvent() {
   if (!title.value || !email.value || !event_time.value || !reminder_time.value) {
     alert("Fill all fields");
@@ -190,7 +199,7 @@ async function addEvent() {
   loadEvents();
 }
 
-// EDIT
+// ✏️ EDIT EVENT
 async function editEvent(id) {
   editId = id;
 
@@ -207,7 +216,7 @@ async function editEvent(id) {
   reminder_time.value = new Date(e.reminder_time).toISOString().slice(0,16);
 }
 
-// DELETE
+// ❌ DELETE EVENT
 async function deleteEvent(id) {
   await fetch(`${API}/events/${id}`, {
     method: "DELETE",
@@ -217,7 +226,7 @@ async function deleteEvent(id) {
   loadEvents();
 }
 
-// CLEAR
+// 🧹 CLEAR FORM
 function clearForm() {
   title.value = "";
   email.value = "";
