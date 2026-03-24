@@ -27,21 +27,23 @@ const pool = new Pool({
 (async () => {
   try {
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        email TEXT UNIQUE,
-        password TEXT
-      );
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE,
+    password TEXT
+  );
 
-      CREATE TABLE IF NOT EXISTS events (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER,
-        title TEXT,
-        email TEXT,
-        event_time TIMESTAMP,
-        reminder_time TIMESTAMP
-      );
-    `);
+  CREATE TABLE IF NOT EXISTS events (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER,
+    title TEXT,
+    email TEXT,
+    event_time TIMESTAMP,
+    reminder_time TIMESTAMP
+  );
+
+  ALTER TABLE events ADD COLUMN IF NOT EXISTS user_id INTEGER;
+`);
     console.log("✅ Tables ready");
   } catch (err) {
     console.error("DB ERROR:", err.message);
