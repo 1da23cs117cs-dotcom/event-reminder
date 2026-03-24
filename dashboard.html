@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h2>📅 Dashboard</h2>
+
+  <button onclick="logout()">Logout</button>
+
+  <hr>
+
+  <h3>Add Event</h3>
+
+  <input id="title" placeholder="Event Title">
+  <input id="remail" placeholder="Reminder Email">
+  <input id="etime" type="datetime-local">
+  <input id="rtime" type="datetime-local">
+
+  <button onclick="addEvent()">Add Event</button>
+
+  <hr>
+
+  <h3>Your Events</h3>
+  <div id="events"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
