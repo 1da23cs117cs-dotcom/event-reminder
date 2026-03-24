@@ -1,50 +1,19 @@
 const API = "https://event-reminder-sg2s.onrender.com";
 
-// ================= SIGNUP =================
-async function signup() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  const res = await fetch(API + "/signup", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await res.json();
-  alert(res.ok ? "Signup successful ✅" : data.error);
-}
-
-// ================= LOGIN =================
-async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  const res = await fetch(API + "/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await res.json();
-
-  if (res.ok) {
-    localStorage.setItem("token", data.token);
-    window.location.href = "dashboard.html"; // 🔥 redirect
-  } else {
-    alert(data.error);
-  }
-}
-
 // ================= LOGOUT =================
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "index.html";
 }
 
-// ================= ADD EVENT =================
+// ================= ADD / UPDATE EVENT =================
 async function addEvent() {
   const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("Login first ❌");
+    return;
+  }
 
   const body = {
     title: document.getElementById("title").value,
@@ -53,8 +22,17 @@ async function addEvent() {
     reminder_time: new Date(document.getElementById("rtime").value).toISOString()
   };
 
-  const res = await fetch(API + "/events", {
-    method: "POST",
+  let url = API + "/events";
+  let method = "POST";
+
+  // ✅ If editing
+  if (window.editId) {
+    url = API + "/events/" + window.editId;
+    method = "PUT";
+  }
+
+  const res = await fetch(url, {
+    method,
     headers: {
       "Content-Type": "application/json",
       "Authorization": "Bearer " + token
@@ -62,20 +40,27 @@ async function addEvent() {
     body: JSON.stringify(body)
   });
 
-  const data = await res.json();
-  alert(res.ok ? "Event added ✅" : data.error);
+  if (res.ok) {
+    alert(window.editId ? "Updated ✅" : "Added ✅");
 
-  loadEvents();
+    // clear form
+    document.getElementById("title").value = "";
+    document.getElementById("remail").value = "";
+    document.getElementById("etime").value = "";
+    document.getElementById("rtime").value = "";
+
+    window.editId = null;
+
+    loadEvents();
+  } else {
+    alert("Error ❌");
+  }
 }
 
 // ================= LOAD EVENTS =================
 async function loadEvents() {
   const token = localStorage.getItem("token");
-
-  if (!token) {
-    window.location.href = "index.html";
-    return;
-  }
+  if (!token) return;
 
   const res = await fetch(API + "/events", {
     headers: { Authorization: "Bearer " + token }
@@ -84,12 +69,10 @@ async function loadEvents() {
   const data = await res.json();
 
   const div = document.getElementById("events");
-  if (!div) return;
-
   div.innerHTML = "";
 
   if (!Array.isArray(data)) {
-    console.log(data);
+    console.log("Error:", data);
     return;
   }
 
@@ -97,13 +80,52 @@ async function loadEvents() {
     div.innerHTML += `
       <div class="event">
         <b>${e.title}</b><br>
-        ${new Date(e.event_time).toLocaleString()}
+        ${new Date(e.event_time).toLocaleString()}<br><br>
+
+        <button onclick="editEvent(${e.id}, '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')">
+          Edit
+        </button>
+
+        <button onclick="deleteEvent(${e.id})">
+          Delete
+        </button>
       </div>
     `;
   });
 }
 
-// Auto load events ONLY on dashboard
-if (window.location.pathname.includes("dashboard.html")) {
-  loadEvents();
+// ================= DELETE =================
+async function deleteEvent(id) {
+  const token = localStorage.getItem("token");
+
+  if (!confirm("Delete this event?")) return;
+
+  const res = await fetch(API + "/events/" + id, {
+    method: "DELETE",
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  if (res.ok) {
+    alert("Deleted ✅");
+    loadEvents();
+  } else {
+    alert("Delete failed ❌");
+  }
 }
+
+// ================= EDIT =================
+function editEvent(id, title, email, event_time, reminder_time) {
+  document.getElementById("title").value = title;
+  document.getElementById("remail").value = email;
+
+  document.getElementById("etime").value =
+    new Date(event_time).toISOString().slice(0,16);
+
+  document.getElementById("rtime").value =
+    new Date(reminder_time).toISOString().slice(0,16);
+
+  window.editId = id;
+}
+
+// ================= LOAD ON START =================
+loadEvents();
