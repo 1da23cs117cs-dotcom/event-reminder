@@ -22,15 +22,11 @@ body {
   color: white;
 }
 
-h2 {
-  text-align: center;
-}
-
 input, button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   margin: 6px 0;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
 }
 
@@ -40,8 +36,7 @@ input {
 }
 
 button {
-  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
-  color: white;
+  background: #38bdf8;
   cursor: pointer;
 }
 
@@ -51,15 +46,6 @@ button {
   margin-top: 10px;
   border-radius: 10px;
 }
-
-.actions {
-  margin-top: 5px;
-  display: flex;
-  gap: 5px;
-}
-
-.delete { background: #ef4444; }
-.edit { background: #22c55e; }
 </style>
 </head>
 
@@ -68,22 +54,22 @@ button {
 <div class="container">
   <h2>📅 Event Reminder</h2>
 
-  <!-- 🔐 AUTH -->
-  <input id="authEmail" placeholder="Email">
-  <input id="authPassword" type="password" placeholder="Password">
+  <!-- AUTH -->
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
 
   <button onclick="signup()">Signup</button>
   <button onclick="login()">Login</button>
 
   <hr>
 
-  <!-- 📅 EVENT -->
+  <!-- EVENTS -->
   <input id="title" placeholder="Event Title">
-  <input id="email" placeholder="Reminder Email">
-  <input id="event_time" type="datetime-local">
-  <input id="reminder_time" type="datetime-local">
+  <input id="remail" placeholder="Reminder Email">
+  <input id="etime" type="datetime-local">
+  <input id="rtime" type="datetime-local">
 
-  <button onclick="addEvent()">Add / Update Event</button>
+  <button onclick="addEvent()">Add Event</button>
 
   <div id="events"></div>
 </div>
@@ -91,45 +77,35 @@ button {
 <script>
 const API = "https://event-reminder-sg2s.onrender.com";
 
-let editId = null;
-
-// ✅ TOKEN HEADER FIX (IMPORTANT)
-function getHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + localStorage.getItem("token")
-  };
-}
-
-// 🔐 SIGNUP
+// ================= SIGNUP =================
 async function signup() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
   const res = await fetch(API + "/signup", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: authEmail.value,
-      password: authPassword.value
-    })
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
   });
 
   const data = await res.json();
-  alert(data.message || data.error);
+  alert(res.ok ? "Signup successful ✅" : data.error);
 }
 
-// 🔐 LOGIN
+// ================= LOGIN =================
 async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
   const res = await fetch(API + "/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: authEmail.value,
-      password: authPassword.value
-    })
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ email, password })
   });
 
   const data = await res.json();
 
-  if (data.token) {
+  if (res.ok) {
     localStorage.setItem("token", data.token);
     alert("Login successful ✅");
     loadEvents();
@@ -138,101 +114,66 @@ async function login() {
   }
 }
 
-// 📦 LOAD EVENTS
-async function loadEvents() {
-  const res = await fetch(API + "/events", {
-    headers: getHeaders()
-  });
+// ================= ADD EVENT =================
+async function addEvent() {
+  const token = localStorage.getItem("token");
 
-  if (!res.ok) {
-    alert("Login required ❌");
+  if (!token) {
+    alert("Login first ❌");
     return;
   }
 
+  const body = {
+    title: document.getElementById("title").value,
+    email: document.getElementById("remail").value,
+    event_time: new Date(document.getElementById("etime").value).toISOString(),
+    reminder_time: new Date(document.getElementById("rtime").value).toISOString()
+  };
+
+  const res = await fetch(API + "/events", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify(body)
+  });
+
+  const data = await res.json();
+  alert(res.ok ? "Event added ✅" : data.error);
+
+  loadEvents();
+}
+
+// ================= LOAD EVENTS =================
+async function loadEvents() {
+  const token = localStorage.getItem("token");
+
+  if (!token) return;
+
+  const res = await fetch(API + "/events", {
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  });
+
   const data = await res.json();
 
-  const container = document.getElementById("events");
-  container.innerHTML = "";
+  const div = document.getElementById("events");
+  div.innerHTML = "";
 
   data.forEach(e => {
-    container.innerHTML += `
+    div.innerHTML += `
       <div class="event">
         <b>${e.title}</b><br>
-        📧 ${e.email}<br>
-        ⏰ ${new Date(e.event_time).toLocaleString()}<br>
-        🔔 ${new Date(e.reminder_time).toLocaleString()}
-
-        <div class="actions">
-          <button class="edit" onclick="editEvent(${e.id})">Edit</button>
-          <button class="delete" onclick="deleteEvent(${e.id})">Delete</button>
-        </div>
+        ${new Date(e.event_time).toLocaleString()}
       </div>
     `;
   });
 }
 
-// ➕ ADD / UPDATE EVENT
-async function addEvent() {
-  if (!title.value || !email.value || !event_time.value || !reminder_time.value) {
-    alert("Fill all fields");
-    return;
-  }
-
-  const body = {
-    title: title.value,
-    email: email.value,
-    event_time: new Date(event_time.value).toISOString(),
-    reminder_time: new Date(reminder_time.value).toISOString()
-  };
-
-  const method = editId ? "PUT" : "POST";
-  const url = editId ? `${API}/events/${editId}` : `${API}/events`;
-
-  await fetch(url, {
-    method,
-    headers: getHeaders(),
-    body: JSON.stringify(body)
-  });
-
-  editId = null;
-  clearForm();
-  loadEvents();
-}
-
-// ✏️ EDIT EVENT
-async function editEvent(id) {
-  editId = id;
-
-  const res = await fetch(API + "/events", {
-    headers: getHeaders()
-  });
-
-  const data = await res.json();
-  const e = data.find(x => x.id === id);
-
-  title.value = e.title;
-  email.value = e.email;
-  event_time.value = new Date(e.event_time).toISOString().slice(0,16);
-  reminder_time.value = new Date(e.reminder_time).toISOString().slice(0,16);
-}
-
-// ❌ DELETE EVENT
-async function deleteEvent(id) {
-  await fetch(`${API}/events/${id}`, {
-    method: "DELETE",
-    headers: getHeaders()
-  });
-
-  loadEvents();
-}
-
-// 🧹 CLEAR FORM
-function clearForm() {
-  title.value = "";
-  email.value = "";
-  event_time.value = "";
-  reminder_time.value = "";
-}
+// Load on start
+loadEvents();
 </script>
 
 </body>
