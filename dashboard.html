@@ -8,31 +8,39 @@
 
 <div class="main">
 
-  <!-- SIDEBAR -->
+  <!-- Sidebar -->
   <div class="sidebar">
     <h2>📅</h2>
 
-    <button onclick="showSection('dashboard')">📊 Dashboard</button>
-    <button onclick="showSection('add')">➕ Add Event</button>
-    <button onclick="showSection('view')">📋 View Events</button>
+    <button onclick="showSection('dashboardSection')">📊 Dashboard</button>
+    <button onclick="showSection('addSection')">➕ Add Event</button>
+    <button onclick="showSection('viewSection')">📋 View Events</button>
     <button onclick="logout()">🚪 Logout</button>
   </div>
 
-  <!-- CONTENT -->
+  <!-- Content -->
   <div class="content">
 
-    <!-- DASHBOARD -->
+    <!-- Dashboard -->
     <div id="dashboardSection">
       <h2>📊 Stats</h2>
-
-      <div class="stats">
-        <div class="card">Total<br><span id="total">0</span></div>
-        <div class="card">Upcoming<br><span id="upcoming">0</span></div>
-        <div class="card">Past<br><span id="past">0</span></div>
+      <div class="cards">
+        <div class="card">
+          <h3>Total</h3>
+          <p id="total">0</p>
+        </div>
+        <div class="card">
+          <h3>Upcoming</h3>
+          <p id="upcoming">0</p>
+        </div>
+        <div class="card">
+          <h3>Past</h3>
+          <p id="past">0</p>
+        </div>
       </div>
     </div>
 
-    <!-- ADD EVENT -->
+    <!-- Add Event -->
     <div id="addSection" style="display:none;">
       <h2>Add Event</h2>
 
@@ -44,7 +52,7 @@
       <button onclick="addEvent()">Save Event</button>
     </div>
 
-    <!-- VIEW EVENTS -->
+    <!-- View Events -->
     <div id="viewSection" style="display:none;">
       <h2>Your Events</h2>
       <div id="events"></div>
