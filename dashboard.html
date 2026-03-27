@@ -5,7 +5,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 
-<body onload="checkAuth(); showSection('dashboard'); loadEvents();">
+<body onload="init()">
 
 <div class="layout">
 
@@ -19,12 +19,13 @@
     <button onclick="logout()">🚪 Logout</button>
   </div>
 
-  <!-- Main Content -->
+  <!-- Main -->
   <div class="main">
 
-    <!-- Dashboard Stats -->
+    <!-- Dashboard -->
     <div id="dashboardSection">
       <h2>📊 Stats</h2>
+
       <div class="stats">
         <div class="card">Total<br><span id="total">0</span></div>
         <div class="card">Upcoming<br><span id="upcoming">0</span></div>

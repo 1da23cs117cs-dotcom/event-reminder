@@ -1,15 +1,13 @@
 const API = "https://event-reminder-sg2s.onrender.com";
 
-let editId = null;
-
-// SWITCH SECTIONS
-function showSection(section) {
-  document.getElementById("dashboardSection").style.display = "none";
-  document.getElementById("addSection").style.display = "none";
-  document.getElementById("viewSection").style.display = "none";
-
-  document.getElementById(section).style.display = "block";
+// ✅ INIT
+function init() {
+  checkAuth();
+  showSection("dashboard");
+  loadEvents();
 }
+
+// ✅ Check login
 function checkAuth() {
   const token = localStorage.getItem("token");
 
@@ -19,120 +17,138 @@ function checkAuth() {
   }
 }
 
-// ADD / UPDATE EVENT
-async function addEvent() {
-  const title = document.getElementById("title").value;
-  const email = document.getElementById("remail").value;
-  const etime = document.getElementById("etime").value;
-  const rtime = document.getElementById("rtime").value;
+// ✅ Section switch (SAFE)
+function showSection(section) {
+  const dashboard = document.getElementById("dashboardSection");
+  const add = document.getElementById("addSection");
+  const view = document.getElementById("viewSection");
 
-  const method = editId ? "PUT" : "POST";
-  const url = editId ? `${API}/events/${editId}` : `${API}/events`;
-
-  await fetch(url, {
-    method: method,
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      title,
-      email,
-      event_time: etime,
-      reminder_time: rtime
-    })
-  });
-
-  alert(editId ? "Event Updated" : "Event Added");
-
-  editId = null;
-  loadEvents();
-  showSection("viewSection");
-}
-
-// LOAD EVENTS
-async function loadEvents() {
-  const container = document.getElementById("events");
-
-  // ✅ VERY IMPORTANT FIX
-  if (!container) return;
-
-  const token = localStorage.getItem("token");
-
-  const res = await fetch("https://event-reminder-sg2s.onrender.com/events", {
-    headers: {
-      "Authorization": "Bearer " + token
-    }
-  });
-
-  const events = await res.json();
-
-  console.log("EVENTS:", events); // ✅ debug
-
-  container.innerHTML = "";
-
-  events.forEach(e => {
-    container.innerHTML += `
-      <div>
-        <h4>${e.title}</h4>
-        <p>${new Date(e.event_time).toLocaleString()}</p>
-      </div>
-    `;
-  });
-}
-async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  const res = await fetch("https://event-reminder-sg2s.onrender.com/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await res.json();
-
-  console.log("LOGIN RESPONSE:", data); // DEBUG
-
-  if (data.token) {
-    localStorage.setItem("token", data.token); // ✅ SAVE TOKEN
-    window.location.href = "dashboard.html";   // ✅ GO TO DASHBOARD
-  } else {
-    alert("Login failed");
+  if (!dashboard || !add || !view) {
+    console.error("Section missing in HTML ❌");
+    return;
   }
+
+  dashboard.style.display = "none";
+  add.style.display = "none";
+  view.style.display = "none";
+
+  if (section === "dashboard") dashboard.style.display = "block";
+  if (section === "add") add.style.display = "block";
+  if (section === "view") view.style.display = "block";
 }
+
+// ✅ Logout
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "index.html";
 }
 
-// EDIT EVENT
-function editEvent(id, title, email, etime, rtime) {
-  editId = id;
+// ✅ Load Events (FIXED)
+async function loadEvents() {
+  const token = localStorage.getItem("token");
 
-  document.getElementById("title").value = title;
-  document.getElementById("remail").value = email;
-  document.getElementById("etime").value = etime.slice(0,16);
-  document.getElementById("rtime").value = rtime.slice(0,16);
+  try {
+    const res = await fetch(`${API}/events`, {
+      headers: {
+        "Authorization": `Bearer ${token}`   // ✅ FIXED
+      }
+    });
 
-  showSection("addSection");
+    const data = await res.json();
+    console.log("EVENTS:", data);
+
+    const eventsDiv = document.getElementById("events");
+
+    if (!eventsDiv) return;
+
+    eventsDiv.innerHTML = "";
+
+    let total = 0;
+    let upcoming = 0;
+    let past = 0;
+
+    data.forEach(event => {
+      total++;
+
+      const eventTime = new Date(event.event_time);
+
+      if (eventTime > new Date()) upcoming++;
+      else past++;
+
+      eventsDiv.innerHTML += `
+        <div class="event">
+          <b>${event.title}</b><br>
+          ${event.reminder_email}<br>
+          ${eventTime.toLocaleString()}<br><br>
+
+          <button onclick="deleteEvent('${event.id}')">Delete</button>
+        </div>
+      `;
+    });
+
+    // ✅ Update stats safely
+    const totalEl = document.getElementById("total");
+    const upcomingEl = document.getElementById("upcoming");
+    const pastEl = document.getElementById("past");
+
+    if (totalEl) totalEl.innerText = total;
+    if (upcomingEl) upcomingEl.innerText = upcoming;
+    if (pastEl) pastEl.innerText = past;
+
+  } catch (err) {
+    console.error("Error loading events ❌", err);
+  }
 }
 
-// DELETE EVENT
+// ✅ Add Event
+async function addEvent() {
+  const token = localStorage.getItem("token");
+
+  const title = document.getElementById("title").value;
+  const email = document.getElementById("remail").value;
+  const etime = document.getElementById("etime").value;
+  const rtime = document.getElementById("rtime").value;
+
+  try {
+    await fetch(`${API}/events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`   // ✅ FIXED
+      },
+      body: JSON.stringify({
+        title,
+        reminder_email: email,
+        event_time: etime,
+        reminder_time: rtime
+      })
+    });
+
+    alert("Event Added ✅");
+
+    loadEvents();
+    showSection("view");
+
+  } catch (err) {
+    console.error("Add error ❌", err);
+  }
+}
+
+// ✅ Delete Event
 async function deleteEvent(id) {
-  await fetch(`${API}/events/${id}`, {
-    method: "DELETE"
-  });
+  const token = localStorage.getItem("token");
 
-  alert("Deleted");
-  loadEvents();
+  try {
+    await fetch(`${API}/events/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`   // ✅ FIXED
+      }
+    });
+
+    loadEvents();
+
+  } catch (err) {
+    console.error("Delete error ❌", err);
+  }
 }
-
-// LOGOUT
-function logout() {
-  window.location.href = "index.html";
-}
-
-// AUTO LOAD
-loadEvents();
