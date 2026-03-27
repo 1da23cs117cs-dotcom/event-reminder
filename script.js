@@ -10,6 +10,14 @@ function showSection(section) {
 
   document.getElementById(section).style.display = "block";
 }
+function checkAuth() {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    alert("Please login first");
+    window.location.href = "index.html";
+  }
+}
 
 // ADD / UPDATE EVENT
 async function addEvent() {
@@ -43,37 +51,60 @@ async function addEvent() {
 
 // LOAD EVENTS
 async function loadEvents() {
-  const res = await fetch(`${API}/events`);
-  const data = await res.json();
-
   const container = document.getElementById("events");
+
+  // ✅ VERY IMPORTANT FIX
+  if (!container) return;
+
+  const token = localStorage.getItem("token");
+
+  const res = await fetch("https://event-reminder-sg2s.onrender.com/events", {
+    headers: {
+      "Authorization": "Bearer " + token
+    }
+  });
+
+  const events = await res.json();
+
+  console.log("EVENTS:", events); // ✅ debug
+
   container.innerHTML = "";
 
-  let total = data.length;
-  let upcoming = 0;
-  let past = 0;
-
-  data.forEach(e => {
-    const now = new Date();
-    const eventDate = new Date(e.event_time);
-
-    if (eventDate > now) upcoming++;
-    else past++;
-
+  events.forEach(e => {
     container.innerHTML += `
-      <div class="event-card">
+      <div>
         <h4>${e.title}</h4>
         <p>${new Date(e.event_time).toLocaleString()}</p>
-
-        <button onclick="editEvent(${e.id}, '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')">Edit</button>
-        <button onclick="deleteEvent(${e.id})">Delete</button>
       </div>
     `;
   });
+}
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-  document.getElementById("total").innerText = total;
-  document.getElementById("upcoming").innerText = upcoming;
-  document.getElementById("past").innerText = past;
+  const res = await fetch("https://event-reminder-sg2s.onrender.com/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  console.log("LOGIN RESPONSE:", data); // DEBUG
+
+  if (data.token) {
+    localStorage.setItem("token", data.token); // ✅ SAVE TOKEN
+    window.location.href = "dashboard.html";   // ✅ GO TO DASHBOARD
+  } else {
+    alert("Login failed");
+  }
+}
+function logout() {
+  localStorage.removeItem("token");
+  window.location.href = "index.html";
 }
 
 // EDIT EVENT

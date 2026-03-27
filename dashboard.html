@@ -4,39 +4,31 @@
   <title>Dashboard</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
 
-<div class="main">
+<body onload="checkAuth(); showSection('dashboard'); loadEvents();">
+
+<div class="layout">
 
   <!-- Sidebar -->
   <div class="sidebar">
     <h2>📅</h2>
 
-    <button onclick="showSection('dashboardSection')">📊 Dashboard</button>
-    <button onclick="showSection('addSection')">➕ Add Event</button>
-    <button onclick="showSection('viewSection')">📋 View Events</button>
+    <button onclick="showSection('dashboard')">📊 Dashboard</button>
+    <button onclick="showSection('add')">➕ Add Event</button>
+    <button onclick="showSection('view')">📋 View Events</button>
     <button onclick="logout()">🚪 Logout</button>
   </div>
 
-  <!-- Content -->
-  <div class="content">
+  <!-- Main Content -->
+  <div class="main">
 
-    <!-- Dashboard -->
+    <!-- Dashboard Stats -->
     <div id="dashboardSection">
       <h2>📊 Stats</h2>
-      <div class="cards">
-        <div class="card">
-          <h3>Total</h3>
-          <p id="total">0</p>
-        </div>
-        <div class="card">
-          <h3>Upcoming</h3>
-          <p id="upcoming">0</p>
-        </div>
-        <div class="card">
-          <h3>Past</h3>
-          <p id="past">0</p>
-        </div>
+      <div class="stats">
+        <div class="card">Total<br><span id="total">0</span></div>
+        <div class="card">Upcoming<br><span id="upcoming">0</span></div>
+        <div class="card">Past<br><span id="past">0</span></div>
       </div>
     </div>
 
@@ -59,7 +51,6 @@
     </div>
 
   </div>
-
 </div>
 
 <script src="script.js"></script>
