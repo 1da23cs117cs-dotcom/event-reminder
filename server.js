@@ -208,7 +208,9 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log("🚀 Server running on port", PORT);
-  await createTables(); // 🔥 auto-create tables
+
+  // run in background (no blocking)
+  createTables();
 });
