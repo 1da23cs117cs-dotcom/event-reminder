@@ -17,6 +17,36 @@ const pool = new Pool({
 
 const SECRET = "mysecret";
 
+// ================= CREATE TABLES =================
+
+async function createTables() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE,
+        password TEXT
+      );
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS events (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        title TEXT,
+        email TEXT,
+        event_time TIMESTAMP,
+        reminder_time TIMESTAMP,
+        category TEXT DEFAULT 'General'
+      );
+    `);
+
+    console.log("✅ Tables created");
+  } catch (err) {
+    console.error("❌ Table creation error:", err);
+  }
+}
+
 // ================= AUTH =================
 
 function auth(req, res, next) {
@@ -89,6 +119,7 @@ app.get("/events", auth, async (req, res) => {
 
     res.json(result.rows);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to fetch events" });
   }
 });
@@ -105,7 +136,7 @@ app.post("/events", auth, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
-        req.user.id, // 🔥 THIS FIXES YOUR ISSUE
+        req.user.id,   // 🔥 critical fix
         title,
         email,
         event_time,
@@ -116,6 +147,7 @@ app.post("/events", auth, async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Failed to add event" });
   }
 });
@@ -142,7 +174,8 @@ app.put("/events/:id", auth, async (req, res) => {
     );
 
     res.json({ message: "Updated" });
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Update failed" });
   }
 });
@@ -150,12 +183,17 @@ app.put("/events/:id", auth, async (req, res) => {
 // ================= DELETE =================
 
 app.delete("/events/:id", auth, async (req, res) => {
-  await pool.query(
-    "DELETE FROM events WHERE id=$1 AND user_id=$2",
-    [req.params.id, req.user.id]
-  );
+  try {
+    await pool.query(
+      "DELETE FROM events WHERE id=$1 AND user_id=$2",
+      [req.params.id, req.user.id]
+    );
 
-  res.json({ message: "Deleted" });
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Delete failed" });
+  }
 });
 
 // ================= ROOT =================
@@ -168,6 +206,7 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log("🚀 Server running on port", PORT);
+  await createTables(); // 🔥 auto-create tables
 });
