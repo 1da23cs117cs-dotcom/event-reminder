@@ -8,84 +8,68 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const SECRET = process.env.JWT_SECRET || "supersecret";
 
-// ✅ Middlewares
+// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// ✅ ROOT (Backend test)
+// Root test
 app.get("/", (req, res) => {
   res.json({ message: "Backend is running 🚀" });
 });
 
-// ✅ PostgreSQL
+// PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// ✅ Create tables
+// Create tables
 (async () => {
   try {
     await pool.query(`
-  CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    email TEXT UNIQUE,
-    password TEXT
-  );
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE,
+        password TEXT
+      );
 
-  CREATE TABLE IF NOT EXISTS events (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER,
-    title TEXT,
-    email TEXT,
-    event_time TIMESTAMP,
-    reminder_time TIMESTAMP
-  );
-
-  ALTER TABLE events ADD COLUMN IF NOT EXISTS user_id INTEGER;
-`);
+      CREATE TABLE IF NOT EXISTS events (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER,
+        title TEXT,
+        email TEXT,
+        event_time TIMESTAMP,
+        reminder_time TIMESTAMP
+      );
+    `);
     console.log("✅ Tables ready");
   } catch (err) {
     console.error("DB ERROR:", err.message);
   }
 })();
 
-// 🔐 AUTH MIDDLEWARE (FIXED)
+// AUTH middleware
 function auth(req, res, next) {
   try {
     const header = req.headers.authorization;
+    if (!header) return res.status(401).json({ error: "No token" });
 
-    if (!header) {
-      return res.status(401).json({ error: "No token" });
-    }
-
-    const token = header.startsWith("Bearer ")
-      ? header.split(" ")[1]
-      : header;
-
+    const token = header.split(" ")[1];
     const decoded = jwt.verify(token, SECRET);
-
-    if (!decoded.id) {
-      return res.status(401).json({ error: "Invalid token" });
-    }
 
     req.user = decoded;
     next();
-  } catch (err) {
-    console.log("AUTH ERROR:", err.message);
+  } catch {
     res.status(401).json({ error: "Invalid token" });
   }
 }
 
 // ================= AUTH =================
 
-// SIGNUP
+// Signup
 app.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password)
-      return res.status(400).json({ error: "Missing fields" });
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -95,12 +79,12 @@ app.post("/signup", async (req, res) => {
     );
 
     res.json({ message: "User created" });
-  } catch (err) {
+  } catch {
     res.status(400).json({ error: "User already exists" });
   }
 });
 
-// LOGIN
+// Login
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -116,7 +100,6 @@ app.post("/login", async (req, res) => {
     const user = result.rows[0];
 
     const valid = await bcrypt.compare(password, user.password);
-
     if (!valid)
       return res.status(400).json({ error: "Wrong password" });
 
@@ -125,37 +108,56 @@ app.post("/login", async (req, res) => {
     });
 
     res.json({ token });
-  } catch (err) {
-    console.log("LOGIN ERROR:", err.message);
+  } catch {
     res.status(500).json({ error: "Login failed" });
   }
 });
 
 // ================= EVENTS =================
 
-// GET EVENTS
-app.get("/events", auth, async (req, res) => {
+// ✅ UPDATED EVENTS ROUTE (works in browser)
+app.get("/events", async (req, res) => {
   try {
+    const header = req.headers.authorization;
+
+    // If token → user-specific events
+    if (header) {
+      const token = header.split(" ")[1];
+      const decoded = jwt.verify(token, SECRET);
+
+      const result = await pool.query(
+        "SELECT * FROM events WHERE user_id=$1 ORDER BY id DESC",
+        [decoded.id]
+      );
+
+      return res.json(result.rows);
+    }
+
+    // If no token → show all events
     const result = await pool.query(
-      "SELECT * FROM events WHERE user_id=$1 ORDER BY id DESC",
-      [req.user.id]
+      "SELECT * FROM events ORDER BY id DESC"
     );
 
     res.json(result.rows);
+
   } catch (err) {
-    console.log("EVENT ERROR:", err.message);
+    console.log(err.message);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// ADD EVENT
+// ✅ PUBLIC ROUTE (safe for browser)
+app.get("/events-public", async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM events ORDER BY id DESC"
+  );
+  res.json(result.rows);
+});
+
+// Add event
 app.post("/events", auth, async (req, res) => {
   try {
     const { title, email, event_time, reminder_time } = req.body;
-
-    if (!title || !email || !event_time || !reminder_time) {
-      return res.status(400).json({ error: "Missing fields" });
-    }
 
     const result = await pool.query(
       `INSERT INTO events (user_id, title, email, event_time, reminder_time)
@@ -170,14 +172,12 @@ app.post("/events", auth, async (req, res) => {
     );
 
     res.json(result.rows[0]);
-
   } catch (err) {
-    console.log("INSERT ERROR:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// UPDATE EVENT
+// Update event
 app.put("/events/:id", auth, async (req, res) => {
   try {
     const { title, email, event_time, reminder_time } = req.body;
@@ -190,13 +190,12 @@ app.put("/events/:id", auth, async (req, res) => {
     );
 
     res.json({ message: "Updated" });
-  } catch (err) {
-    console.log("UPDATE ERROR:", err.message);
+  } catch {
     res.status(500).json({ error: "Update failed" });
   }
 });
 
-// DELETE EVENT
+// Delete event
 app.delete("/events/:id", auth, async (req, res) => {
   try {
     await pool.query(
@@ -205,15 +204,13 @@ app.delete("/events/:id", auth, async (req, res) => {
     );
 
     res.json({ message: "Deleted" });
-  } catch (err) {
-    console.log("DELETE ERROR:", err.message);
+  } catch {
     res.status(500).json({ error: "Delete failed" });
   }
 });
 
-// ================= EMAIL REMINDER =================
+// ================= EMAIL =================
 
-// Gmail transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -222,7 +219,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// Check reminders every minute
+// Reminder system
 setInterval(async () => {
   try {
     const now = new Date();
@@ -247,8 +244,7 @@ setInterval(async () => {
   }
 }, 60000);
 
-// ================= START SERVER =================
-
+// Start server
 const PORT = process.env.PORT || 10000;
 
 app.listen(PORT, () => {
