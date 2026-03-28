@@ -2,10 +2,11 @@ const API = "https://event-reminder-sg2s.onrender.com";
 
 let editId = null;
 
-// AUTH
+// ================= AUTH =================
+
 async function signup() {
-  const email = emailEl().value;
-  const password = passEl().value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
   const res = await fetch(`${API}/signup`, {
     method: "POST",
@@ -13,182 +14,238 @@ async function signup() {
     body: JSON.stringify({ email, password })
   });
 
-  alert((await res.json()).message);
+  const data = await res.json();
+  alert(data.message || data.error);
 }
 
 async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      email: emailEl().value,
-      password: passEl().value
-    })
+    body: JSON.stringify({ email, password })
   });
 
   const data = await res.json();
+
   if (data.token) {
     localStorage.setItem("token", data.token);
-    window.location = "dashboard.html";
-  } else alert(data.error);
+    window.location.href = "dashboard.html";
+  } else {
+    alert(data.error);
+  }
 }
 
-function emailEl(){ return document.getElementById("email"); }
-function passEl(){ return document.getElementById("password"); }
+// ================= INIT =================
 
-// INIT
 function init() {
-  if (!localStorage.getItem("token")) location = "index.html";
+  if (!localStorage.getItem("token")) {
+    window.location.href = "index.html";
+  }
   showSection("dashboard");
   loadEvents();
 }
 
-// NAV
-function showSection(s) {
-  ["dashboard","add","view","calendar"].forEach(sec =>
-    document.getElementById(sec+"Section").classList.add("hidden")
-  );
+// ================= NAVIGATION =================
 
-  document.getElementById(s+"Section").classList.remove("hidden");
+function showSection(section) {
+  document.getElementById("dashboardSection").classList.add("hidden");
+  document.getElementById("addSection").classList.add("hidden");
+  document.getElementById("viewSection").classList.add("hidden");
+  document.getElementById("calendarSection").classList.add("hidden");
 
-  if (s==="calendar") loadCalendar();
+  document.getElementById(section + "Section").classList.remove("hidden");
+
+  if (section === "calendar") {
+    loadCalendar();
+  }
 }
 
 function logout() {
   localStorage.removeItem("token");
-  location = "index.html";
+  window.location.href = "index.html";
 }
 
-// LOAD EVENTS
+// ================= EVENTS =================
+
 async function loadEvents() {
+  const token = localStorage.getItem("token");
+
   const res = await fetch(`${API}/events`, {
-    headers: { Authorization: "Bearer " + localStorage.getItem("token") }
+    headers: { Authorization: "Bearer " + token }
   });
 
   const data = await res.json();
+
   const div = document.getElementById("events");
   div.innerHTML = "";
 
+  let total = 0, upcoming = 0, past = 0;
+
   const search = document.getElementById("search")?.value.toLowerCase() || "";
-  const filter = document.getElementById("filter")?.value;
+  const filter = document.getElementById("filter")?.value || "all";
 
   const colorMap = {
-    Work:"bg-blue-500",
-    Personal:"bg-green-500",
-    Urgent:"bg-red-500",
-    Other:"bg-gray-500"
+    Work: "border-blue-500",
+    Personal: "border-green-500",
+    Urgent: "border-red-500",
+    Other: "border-gray-500"
   };
 
-  let total=0, upcoming=0, past=0;
+  data.forEach(e => {
+    const time = new Date(e.event_time);
+    const isUpcoming = time > new Date();
 
-  data.forEach(e=>{
-    const t=new Date(e.event_time);
-    const up=t>new Date();
+    total++;
+    if (isUpcoming) upcoming++;
+    else past++;
 
-    total++; up?upcoming++:past++;
+    if (!e.title.toLowerCase().includes(search)) return;
+    if (filter === "upcoming" && !isUpcoming) return;
+    if (filter === "past" && isUpcoming) return;
 
-    if(!e.title.toLowerCase().includes(search)) return;
-    if(filter==="upcoming" && !up) return;
-    if(filter==="past" && up) return;
+    const color = colorMap[e.category] || "border-gray-500";
 
-    div.innerHTML+=`
-      <div class="${colorMap[e.category]||"bg-gray-500"} p-4 rounded-xl">
-        <h3>${e.title}</h3>
-        <p>${e.category}</p>
-        <p>${t.toLocaleString()}</p>
+    div.innerHTML += `
+      <div class="bg-gray-800 p-5 rounded-2xl shadow-lg border-l-4 ${color} hover:scale-[1.02] transition">
 
-        <button onclick="editEvent('${e.id}','${e.title}','${e.email}','${e.event_time}','${e.reminder_time}','${e.category}')">Edit</button>
-        <button onclick="deleteEvent('${e.id}')">Delete</button>
-      </div>`;
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-semibold">${e.title}</h3>
+          <span class="text-xs px-2 py-1 bg-gray-700 rounded-full">
+            ${e.category || "General"}
+          </span>
+        </div>
+
+        <p class="text-gray-400 mt-2">
+          🕒 ${time.toLocaleString()}
+        </p>
+
+        <div class="mt-4 flex gap-2">
+          <button onclick="editEvent('${e.id}','${e.title}','${e.email}','${e.event_time}','${e.reminder_time}','${e.category}')"
+            class="bg-yellow-500 hover:bg-yellow-600 px-3 py-1 rounded-lg text-sm">
+            ✏️ Edit
+          </button>
+
+          <button onclick="deleteEvent('${e.id}')"
+            class="bg-red-500 hover:bg-red-600 px-3 py-1 rounded-lg text-sm">
+            🗑 Delete
+          </button>
+        </div>
+
+      </div>
+    `;
   });
 
-  totalEl().innerText=total;
-  upcomingEl().innerText=upcoming;
-  pastEl().innerText=past;
+  if (div.innerHTML === "") {
+    div.innerHTML = "<p class='text-gray-400'>No events found</p>";
+  }
+
+  // stats
+  document.getElementById("total").innerText = total;
+  document.getElementById("upcoming").innerText = upcoming;
+  document.getElementById("past").innerText = past;
 }
 
-function totalEl(){return document.getElementById("total")}
-function upcomingEl(){return document.getElementById("upcoming")}
-function pastEl(){return document.getElementById("past")}
+// ================= ADD / UPDATE =================
 
-// ADD
-async function addEvent(){
-  const body={
-    title:val("title"),
-    email:val("remail"),
-    event_time:val("etime"),
-    reminder_time:val("rtime"),
-    category:val("category")
+async function addEvent() {
+  const token = localStorage.getItem("token");
+
+  const title = document.getElementById("title").value;
+  const email = document.getElementById("remail").value;
+  const etime = document.getElementById("etime").value;
+  const rtime = document.getElementById("rtime").value;
+  const category = document.getElementById("category").value;
+
+  const body = {
+    title,
+    email,
+    event_time: etime,
+    reminder_time: rtime,
+    category
   };
 
   const url = editId ? `${API}/events/${editId}` : `${API}/events`;
 
-  await fetch(url,{
-    method: editId?"PUT":"POST",
-    headers:{
-      "Content-Type":"application/json",
-      Authorization:"Bearer "+localStorage.getItem("token")
+  await fetch(url, {
+    method: editId ? "PUT" : "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token
     },
-    body:JSON.stringify(body)
+    body: JSON.stringify(body)
   });
 
-  editId=null;
+  alert(editId ? "Updated ✅" : "Added ✅");
+
+  editId = null;
   loadEvents();
   showSection("view");
 }
 
-function val(id){return document.getElementById(id).value}
+// ================= EDIT =================
 
-// EDIT
-function editEvent(id,t,e,et,rt,c){
-  editId=id;
+function editEvent(id, title, email, etime, rtime, category) {
+  editId = id;
+
   showSection("add");
 
-  valSet("title",t);
-  valSet("remail",e);
-  valSet("etime",et.slice(0,16));
-  valSet("rtime",rt.slice(0,16));
-  valSet("category",c);
+  document.getElementById("title").value = title;
+  document.getElementById("remail").value = email;
+  document.getElementById("etime").value = etime.slice(0, 16);
+  document.getElementById("rtime").value = rtime.slice(0, 16);
+  document.getElementById("category").value = category || "Other";
 }
 
-function valSet(id,v){document.getElementById(id).value=v}
+// ================= DELETE =================
 
-// DELETE
-async function deleteEvent(id){
-  await fetch(`${API}/events/${id}`,{
-    method:"DELETE",
-    headers:{Authorization:"Bearer "+localStorage.getItem("token")}
+async function deleteEvent(id) {
+  const token = localStorage.getItem("token");
+
+  await fetch(`${API}/events/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: "Bearer " + token
+    }
   });
+
   loadEvents();
 }
 
-// CALENDAR
-async function loadCalendar(){
+// ================= CALENDAR =================
+
+async function loadCalendar() {
+  const token = localStorage.getItem("token");
+
   const res = await fetch(`${API}/events`, {
-    headers:{Authorization:"Bearer "+localStorage.getItem("token")}
+    headers: { Authorization: "Bearer " + token }
   });
 
   const data = await res.json();
 
   const colorMap = {
-    Work:"blue",
-    Personal:"green",
-    Urgent:"red",
-    Other:"gray"
+    Work: "blue",
+    Personal: "green",
+    Urgent: "red",
+    Other: "gray"
   };
 
-  const events = data.map(e=>({
-    title:e.title,
-    start:e.event_time,
-    color:colorMap[e.category]||"gray"
+  const events = data.map(e => ({
+    title: e.title,
+    start: e.event_time,
+    color: colorMap[e.category] || "gray"
   }));
 
-  const el=document.getElementById("calendar");
-  el.innerHTML="";
+  const calendarEl = document.getElementById("calendar");
+  calendarEl.innerHTML = "";
 
-  new FullCalendar.Calendar(el,{
-    initialView:'dayGridMonth',
-    height:600,
-    events
-  }).render();
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: "dayGridMonth",
+    height: 600,
+    events: events
+  });
+
+  calendar.render();
 }
