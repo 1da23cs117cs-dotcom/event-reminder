@@ -2,7 +2,12 @@
 <html>
 <head>
   <title>Dashboard</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FullCalendar -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 </head>
 
 <body class="bg-gray-900 text-white" onload="init()">
@@ -16,6 +21,7 @@
     <button onclick="showSection('dashboard')" class="w-full text-left p-2 hover:bg-gray-700 rounded">📊 Dashboard</button>
     <button onclick="showSection('add')" class="w-full text-left p-2 hover:bg-gray-700 rounded">➕ Add Event</button>
     <button onclick="showSection('view')" class="w-full text-left p-2 hover:bg-gray-700 rounded">📋 View Events</button>
+    <button onclick="showSection('calendar')" class="w-full text-left p-2 hover:bg-gray-700 rounded">📅 Calendar</button>
     <button onclick="logout()" class="w-full text-left p-2 hover:bg-red-600 rounded">🚪 Logout</button>
   </div>
 
@@ -78,6 +84,12 @@
       </div>
 
       <div id="events" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+
+    <!-- Calendar -->
+    <div id="calendarSection" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">📅 Calendar View</h2>
+      <div id="calendar" class="bg-white text-black p-3 rounded-xl"></div>
     </div>
 
   </div>

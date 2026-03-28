@@ -37,7 +37,7 @@ async function login() {
   }
 }
 
-// DASHBOARD
+// INIT
 function init() {
   if (!localStorage.getItem("token")) {
     window.location.href = "index.html";
@@ -46,14 +46,21 @@ function init() {
   loadEvents();
 }
 
+// SECTION SWITCH
 function showSection(section) {
   document.getElementById("dashboardSection").classList.add("hidden");
   document.getElementById("addSection").classList.add("hidden");
   document.getElementById("viewSection").classList.add("hidden");
+  document.getElementById("calendarSection").classList.add("hidden");
 
   document.getElementById(section + "Section").classList.remove("hidden");
+
+  if (section === "calendar") {
+    loadCalendar();
+  }
 }
 
+// LOGOUT
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "index.html";
@@ -64,9 +71,7 @@ async function loadEvents() {
   const token = localStorage.getItem("token");
 
   const res = await fetch(`${API}/events`, {
-    headers: {
-      Authorization: "Bearer " + token
-    }
+    headers: { Authorization: "Bearer " + token }
   });
 
   const data = await res.json();
@@ -98,14 +103,10 @@ async function loadEvents() {
 
         <div class="mt-3 space-x-2">
           <button onclick="editEvent('${e.id}', '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')"
-            class="bg-yellow-500 px-3 py-1 rounded">
-            Edit
-          </button>
+            class="bg-yellow-500 px-3 py-1 rounded">Edit</button>
 
           <button onclick="deleteEvent('${e.id}')"
-            class="bg-red-500 px-3 py-1 rounded">
-            Delete
-          </button>
+            class="bg-red-500 px-3 py-1 rounded">Delete</button>
         </div>
       </div>
     `;
@@ -120,6 +121,7 @@ async function loadEvents() {
   document.getElementById("past").innerText = past;
 }
 
+// ADD / UPDATE
 async function addEvent() {
   const token = localStorage.getItem("token");
 
@@ -137,7 +139,6 @@ async function addEvent() {
       },
       body: JSON.stringify({ title, email, event_time: etime, reminder_time: rtime })
     });
-
     alert("Updated ✅");
     editId = null;
   } else {
@@ -149,7 +150,6 @@ async function addEvent() {
       },
       body: JSON.stringify({ title, email, event_time: etime, reminder_time: rtime })
     });
-
     alert("Added ✅");
   }
 
@@ -157,9 +157,9 @@ async function addEvent() {
   showSection("view");
 }
 
+// EDIT
 function editEvent(id, title, email, etime, rtime) {
   editId = id;
-
   showSection("add");
 
   document.getElementById("title").value = title;
@@ -168,15 +168,41 @@ function editEvent(id, title, email, etime, rtime) {
   document.getElementById("rtime").value = rtime.slice(0,16);
 }
 
+// DELETE
 async function deleteEvent(id) {
   const token = localStorage.getItem("token");
 
   await fetch(`${API}/events/${id}`, {
     method: "DELETE",
-    headers: {
-      Authorization: "Bearer " + token
-    }
+    headers: { Authorization: "Bearer " + token }
   });
 
   loadEvents();
+}
+
+// 📅 CALENDAR
+async function loadCalendar() {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`${API}/events`, {
+    headers: { Authorization: "Bearer " + token }
+  });
+
+  const data = await res.json();
+
+  const events = data.map(e => ({
+    title: e.title,
+    start: e.event_time
+  }));
+
+  const calendarEl = document.getElementById("calendar");
+  calendarEl.innerHTML = "";
+
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: "auto",
+    events: events
+  });
+
+  calendar.render();
 }
