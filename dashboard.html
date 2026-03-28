@@ -63,6 +63,20 @@
     <!-- View Events -->
     <div id="viewSection" class="hidden">
       <h2 class="text-2xl font-bold mb-4">Your Events</h2>
+
+      <!-- Search + Filter -->
+      <div class="flex gap-3 mb-4">
+        <input id="search" placeholder="Search events..."
+          class="p-2 rounded bg-gray-800 w-full"
+          oninput="loadEvents()">
+
+        <select id="filter" class="p-2 rounded bg-gray-800" onchange="loadEvents()">
+          <option value="all">All</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="past">Past</option>
+        </select>
+      </div>
+
       <div id="events" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 

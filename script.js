@@ -2,8 +2,7 @@ const API = "https://event-reminder-sg2s.onrender.com";
 
 let editId = null;
 
-// ================= AUTH =================
-
+// AUTH
 async function signup() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -38,8 +37,7 @@ async function login() {
   }
 }
 
-// ================= DASHBOARD =================
-
+// DASHBOARD
 function init() {
   if (!localStorage.getItem("token")) {
     window.location.href = "index.html";
@@ -61,8 +59,7 @@ function logout() {
   window.location.href = "index.html";
 }
 
-// ================= EVENTS =================
-
+// EVENTS
 async function loadEvents() {
   const token = localStorage.getItem("token");
 
@@ -79,12 +76,20 @@ async function loadEvents() {
 
   let total = 0, upcoming = 0, past = 0;
 
-  data.forEach(e => {
-    total++;
+  const search = document.getElementById("search")?.value.toLowerCase() || "";
+  const filter = document.getElementById("filter")?.value || "all";
 
+  data.forEach(e => {
     const time = new Date(e.event_time);
-    if (time > new Date()) upcoming++;
+    const isUpcoming = time > new Date();
+
+    total++;
+    if (isUpcoming) upcoming++;
     else past++;
+
+    if (!e.title.toLowerCase().includes(search)) return;
+    if (filter === "upcoming" && !isUpcoming) return;
+    if (filter === "past" && isUpcoming) return;
 
     div.innerHTML += `
       <div class="bg-gray-800 p-4 rounded-xl">
@@ -105,6 +110,10 @@ async function loadEvents() {
       </div>
     `;
   });
+
+  if (div.innerHTML === "") {
+    div.innerHTML = "<p class='text-gray-400'>No events found</p>";
+  }
 
   document.getElementById("total").innerText = total;
   document.getElementById("upcoming").innerText = upcoming;
@@ -131,7 +140,6 @@ async function addEvent() {
 
     alert("Updated ✅");
     editId = null;
-
   } else {
     await fetch(`${API}/events`, {
       method: "POST",
