@@ -127,18 +127,20 @@ app.get("/events", auth, async (req, res) => {
 // ================= ADD EVENT =================
 
 app.post("/events", auth, async (req, res) => {
-  const { title, email, event_time, reminder_time, category } = req.body;
-
   try {
+    const { title, email, event_time, reminder_time, category } = req.body;
+
+    console.log("Incoming event:", req.body); // 🔍 debug
+
     const result = await pool.query(
       `INSERT INTO events 
-       (user_id, title, email, event_time, reminder_time, category)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING *`,
+      (user_id, title, email, event_time, reminder_time, category)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *`,
       [
-        req.user.id,   // 🔥 critical fix
-        title,
-        email,
+        req.user.id,
+        title || "No Title",
+        email || "",
         event_time,
         reminder_time,
         category || "General"
@@ -147,7 +149,7 @@ app.post("/events", auth, async (req, res) => {
 
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(err);
+    console.error("❌ ADD EVENT ERROR:", err);
     res.status(500).json({ error: "Failed to add event" });
   }
 });
