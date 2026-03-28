@@ -3,6 +3,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { Pool } = require("pg");
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 
 const app = express();
 app.use(cors());
