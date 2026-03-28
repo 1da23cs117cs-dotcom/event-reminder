@@ -17,32 +17,6 @@ const pool = new Pool({
 
 const SECRET = "mysecret";
 
-// ================= CREATE TABLES =================
-
-async function createTables() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      email TEXT UNIQUE,
-      password TEXT
-    );
-  `);
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS events (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER,
-      title TEXT,
-      email TEXT,
-      event_time TIMESTAMP,
-      reminder_time TIMESTAMP,
-      category TEXT DEFAULT 'General'
-    );
-  `);
-
-  console.log("✅ Tables ready");
-}
-
 // ================= AUTH =================
 
 function auth(req, res, next) {
@@ -61,27 +35,27 @@ function auth(req, res, next) {
   }
 }
 
-// ================= AUTH ROUTES =================
+// ================= SIGNUP =================
 
-// SIGNUP
 app.post("/signup", async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const hash = await bcrypt.hash(password, 10);
 
-    const result = await pool.query(
-      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+    await pool.query(
+      "INSERT INTO users (email, password) VALUES ($1, $2)",
       [email, hash]
     );
 
-    res.json(result.rows[0]);
+    res.json({ message: "User created" });
   } catch {
     res.json({ error: "User already exists" });
   }
 });
 
-// LOGIN
+// ================= LOGIN =================
+
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -104,17 +78,14 @@ app.post("/login", async (req, res) => {
   res.json({ token });
 });
 
-// ================= EVENTS =================
+// ================= GET EVENTS =================
 
-// GET EVENTS (FIXED)
 app.get("/events", auth, async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT * FROM events WHERE user_id = $1 ORDER BY event_time",
-      [req.user.id]   // 🔥 critical fix
+      [req.user.id]
     );
-
-    console.log("Fetched events:", result.rows); // debug
 
     res.json(result.rows);
   } catch (err) {
@@ -122,7 +93,8 @@ app.get("/events", auth, async (req, res) => {
   }
 });
 
-// ADD EVENT (FIXED)
+// ================= ADD EVENT =================
+
 app.post("/events", auth, async (req, res) => {
   const { title, email, event_time, reminder_time, category } = req.body;
 
@@ -133,7 +105,7 @@ app.post("/events", auth, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
-        req.user.id,  // 🔥 CRITICAL (fixes your issue)
+        req.user.id, // 🔥 THIS FIXES YOUR ISSUE
         title,
         email,
         event_time,
@@ -142,15 +114,14 @@ app.post("/events", auth, async (req, res) => {
       ]
     );
 
-    console.log("Inserted event:", result.rows[0]); // debug
-
     res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: "Failed to add event" });
   }
 });
 
-// UPDATE EVENT
+// ================= UPDATE =================
+
 app.put("/events/:id", auth, async (req, res) => {
   const { title, email, event_time, reminder_time, category } = req.body;
 
@@ -176,7 +147,8 @@ app.put("/events/:id", auth, async (req, res) => {
   }
 });
 
-// DELETE EVENT
+// ================= DELETE =================
+
 app.delete("/events/:id", auth, async (req, res) => {
   await pool.query(
     "DELETE FROM events WHERE id=$1 AND user_id=$2",
@@ -189,17 +161,13 @@ app.delete("/events/:id", auth, async (req, res) => {
 // ================= ROOT =================
 
 app.get("/", (req, res) => {
-  res.json({
-    status: "API running 🚀",
-    endpoints: ["/signup", "/login", "/events"]
-  });
+  res.send("API running...");
 });
 
 // ================= SERVER =================
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log("🚀 Server running on port", PORT);
-  await createTables();
 });
