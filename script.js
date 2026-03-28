@@ -1,5 +1,7 @@
 const API = "https://event-reminder-sg2s.onrender.com";
 
+let editId = null;
+
 // ================= AUTH =================
 
 // Signup
@@ -40,21 +42,18 @@ async function login() {
 
 // ================= DASHBOARD =================
 
-// Init
 function init() {
   checkAuth();
   showSection("dashboard");
   loadEvents();
 }
 
-// Check login
 function checkAuth() {
   if (!localStorage.getItem("token")) {
     window.location.href = "index.html";
   }
 }
 
-// Switch sections
 function showSection(section) {
   const d = document.getElementById("dashboardSection");
   const a = document.getElementById("addSection");
@@ -71,11 +70,12 @@ function showSection(section) {
   if (section === "view") v.style.display = "block";
 }
 
-// Logout
 function logout() {
   localStorage.removeItem("token");
   window.location.href = "index.html";
 }
+
+// ================= EVENTS =================
 
 // Load events
 async function loadEvents() {
@@ -108,6 +108,8 @@ async function loadEvents() {
       <div class="event">
         <b>${e.title}</b><br>
         ${time.toLocaleString()}<br><br>
+
+        <button onclick="editEvent('${e.id}', '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')">Edit</button>
         <button onclick="deleteEvent('${e.id}')">Delete</button>
       </div>
     `;
@@ -118,7 +120,7 @@ async function loadEvents() {
   document.getElementById("past").innerText = past;
 }
 
-// Add event
+// Add / Update
 async function addEvent() {
   const token = localStorage.getItem("token");
 
@@ -127,27 +129,59 @@ async function addEvent() {
   const etime = document.getElementById("etime").value;
   const rtime = document.getElementById("rtime").value;
 
-  await fetch(`${API}/events`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      title,
-      email,
-      event_time: etime,
-      reminder_time: rtime
-    })
-  });
+  if (editId) {
+    await fetch(`${API}/events/${editId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        title,
+        email,
+        event_time: etime,
+        reminder_time: rtime
+      })
+    });
 
-  alert("Event Added ✅");
+    alert("Event Updated ✅");
+    editId = null;
+
+  } else {
+    await fetch(`${API}/events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        title,
+        email,
+        event_time: etime,
+        reminder_time: rtime
+      })
+    });
+
+    alert("Event Added ✅");
+  }
 
   loadEvents();
   showSection("view");
 }
 
-// Delete event
+// Edit
+function editEvent(id, title, email, etime, rtime) {
+  editId = id;
+
+  showSection("add");
+
+  document.getElementById("title").value = title;
+  document.getElementById("remail").value = email;
+  document.getElementById("etime").value = etime.slice(0,16);
+  document.getElementById("rtime").value = rtime.slice(0,16);
+}
+
+// Delete
 async function deleteEvent(id) {
   const token = localStorage.getItem("token");
 
