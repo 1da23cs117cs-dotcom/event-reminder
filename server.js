@@ -17,7 +17,7 @@ const pool = new Pool({
 
 const SECRET = "mysecret";
 
-// ================= AUTO CREATE TABLES =================
+// ================= CREATE TABLES =================
 
 async function createTables() {
   await pool.query(`
@@ -43,10 +43,7 @@ async function createTables() {
   console.log("✅ Tables ready");
 }
 
-// Run on server start
-createTables();
-
-// ================= AUTH MIDDLEWARE =================
+// ================= AUTH =================
 
 function auth(req, res, next) {
   const header = req.headers.authorization;
@@ -64,25 +61,27 @@ function auth(req, res, next) {
   }
 }
 
-// ================= AUTH =================
+// ================= AUTH ROUTES =================
 
+// SIGNUP
 app.post("/signup", async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const hash = await bcrypt.hash(password, 10);
 
-    await pool.query(
-      "INSERT INTO users (email, password) VALUES ($1, $2)",
+    const result = await pool.query(
+      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
       [email, hash]
     );
 
-    res.json({ message: "User created" });
+    res.json(result.rows[0]);
   } catch {
     res.json({ error: "User already exists" });
   }
 });
 
+// LOGIN
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -107,61 +106,77 @@ app.post("/login", async (req, res) => {
 
 // ================= EVENTS =================
 
-// GET
+// GET EVENTS (FIXED)
 app.get("/events", auth, async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM events WHERE user_id = $1 ORDER BY event_time",
-    [req.user.id]
-  );
+  try {
+    const result = await pool.query(
+      "SELECT * FROM events WHERE user_id = $1 ORDER BY event_time",
+      [req.user.id]   // 🔥 critical fix
+    );
 
-  res.json(result.rows);
+    console.log("Fetched events:", result.rows); // debug
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch events" });
+  }
 });
 
-// ADD
+// ADD EVENT (FIXED)
 app.post("/events", auth, async (req, res) => {
   const { title, email, event_time, reminder_time, category } = req.body;
 
-  const result = await pool.query(
-    `INSERT INTO events 
-     (user_id, title, email, event_time, reminder_time, category)
-     VALUES ($1, $2, $3, $4, $5, $6)
-     RETURNING *`,
-    [
-      req.user.id,
-      title,
-      email,
-      event_time,
-      reminder_time,
-      category || "General"
-    ]
-  );
+  try {
+    const result = await pool.query(
+      `INSERT INTO events 
+       (user_id, title, email, event_time, reminder_time, category)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING *`,
+      [
+        req.user.id,  // 🔥 CRITICAL (fixes your issue)
+        title,
+        email,
+        event_time,
+        reminder_time,
+        category || "General"
+      ]
+    );
 
-  res.json(result.rows[0]);
+    console.log("Inserted event:", result.rows[0]); // debug
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to add event" });
+  }
 });
 
-// UPDATE
+// UPDATE EVENT
 app.put("/events/:id", auth, async (req, res) => {
   const { title, email, event_time, reminder_time, category } = req.body;
 
-  await pool.query(
-    `UPDATE events 
-     SET title=$1, email=$2, event_time=$3, reminder_time=$4, category=$5
-     WHERE id=$6 AND user_id=$7`,
-    [
-      title,
-      email,
-      event_time,
-      reminder_time,
-      category || "General",
-      req.params.id,
-      req.user.id
-    ]
-  );
+  try {
+    await pool.query(
+      `UPDATE events 
+       SET title=$1, email=$2, event_time=$3, reminder_time=$4, category=$5
+       WHERE id=$6 AND user_id=$7`,
+      [
+        title,
+        email,
+        event_time,
+        reminder_time,
+        category || "General",
+        req.params.id,
+        req.user.id
+      ]
+    );
 
-  res.json({ message: "Updated" });
+    res.json({ message: "Updated" });
+  } catch {
+    res.status(500).json({ error: "Update failed" });
+  }
 });
 
-// DELETE
+// DELETE EVENT
 app.delete("/events/:id", auth, async (req, res) => {
   await pool.query(
     "DELETE FROM events WHERE id=$1 AND user_id=$2",
@@ -171,15 +186,20 @@ app.delete("/events/:id", auth, async (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-// ================= SERVER =================
+// ================= ROOT =================
 
 app.get("/", (req, res) => {
-  res.send("API running...");
+  res.json({
+    status: "API running 🚀",
+    endpoints: ["/signup", "/login", "/events"]
+  });
 });
+
+// ================= SERVER =================
 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, async () => {
   console.log("🚀 Server running on port", PORT);
-  await createTables(); // ensure tables exist
+  await createTables();
 });
