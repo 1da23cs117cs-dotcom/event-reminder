@@ -4,8 +4,8 @@ let editId = null;
 
 // AUTH
 async function signup() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+  const email = emailEl().value;
+  const password = passEl().value;
 
   const res = await fetch(`${API}/signup`, {
     method: "POST",
@@ -13,196 +13,182 @@ async function signup() {
     body: JSON.stringify({ email, password })
   });
 
-  const data = await res.json();
-  alert(data.message || data.error);
+  alert((await res.json()).message);
 }
 
 async function login() {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
   const res = await fetch(`${API}/login`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({
+      email: emailEl().value,
+      password: passEl().value
+    })
   });
 
   const data = await res.json();
-
   if (data.token) {
     localStorage.setItem("token", data.token);
-    window.location.href = "dashboard.html";
-  } else {
-    alert(data.error);
-  }
+    window.location = "dashboard.html";
+  } else alert(data.error);
 }
+
+function emailEl(){ return document.getElementById("email"); }
+function passEl(){ return document.getElementById("password"); }
 
 // INIT
 function init() {
-  if (!localStorage.getItem("token")) {
-    window.location.href = "index.html";
-  }
+  if (!localStorage.getItem("token")) location = "index.html";
   showSection("dashboard");
   loadEvents();
 }
 
-// SECTION SWITCH
-function showSection(section) {
-  document.getElementById("dashboardSection").classList.add("hidden");
-  document.getElementById("addSection").classList.add("hidden");
-  document.getElementById("viewSection").classList.add("hidden");
-  document.getElementById("calendarSection").classList.add("hidden");
+// NAV
+function showSection(s) {
+  ["dashboard","add","view","calendar"].forEach(sec =>
+    document.getElementById(sec+"Section").classList.add("hidden")
+  );
 
-  document.getElementById(section + "Section").classList.remove("hidden");
+  document.getElementById(s+"Section").classList.remove("hidden");
 
-  if (section === "calendar") {
-    loadCalendar();
-  }
+  if (s==="calendar") loadCalendar();
 }
 
-// LOGOUT
 function logout() {
   localStorage.removeItem("token");
-  window.location.href = "index.html";
+  location = "index.html";
 }
 
-// EVENTS
+// LOAD EVENTS
 async function loadEvents() {
-  const token = localStorage.getItem("token");
-
   const res = await fetch(`${API}/events`, {
-    headers: { Authorization: "Bearer " + token }
+    headers: { Authorization: "Bearer " + localStorage.getItem("token") }
   });
 
   const data = await res.json();
-
   const div = document.getElementById("events");
   div.innerHTML = "";
 
-  let total = 0, upcoming = 0, past = 0;
-
   const search = document.getElementById("search")?.value.toLowerCase() || "";
-  const filter = document.getElementById("filter")?.value || "all";
+  const filter = document.getElementById("filter")?.value;
 
-  data.forEach(e => {
-    const time = new Date(e.event_time);
-    const isUpcoming = time > new Date();
+  const colorMap = {
+    Work:"bg-blue-500",
+    Personal:"bg-green-500",
+    Urgent:"bg-red-500",
+    Other:"bg-gray-500"
+  };
 
-    total++;
-    if (isUpcoming) upcoming++;
-    else past++;
+  let total=0, upcoming=0, past=0;
 
-    if (!e.title.toLowerCase().includes(search)) return;
-    if (filter === "upcoming" && !isUpcoming) return;
-    if (filter === "past" && isUpcoming) return;
+  data.forEach(e=>{
+    const t=new Date(e.event_time);
+    const up=t>new Date();
 
-    div.innerHTML += `
-      <div class="bg-gray-800 p-4 rounded-xl">
-        <h3 class="text-xl font-bold">${e.title}</h3>
-        <p class="text-gray-400">${time.toLocaleString()}</p>
+    total++; up?upcoming++:past++;
 
-        <div class="mt-3 space-x-2">
-          <button onclick="editEvent('${e.id}', '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')"
-            class="bg-yellow-500 px-3 py-1 rounded">Edit</button>
+    if(!e.title.toLowerCase().includes(search)) return;
+    if(filter==="upcoming" && !up) return;
+    if(filter==="past" && up) return;
 
-          <button onclick="deleteEvent('${e.id}')"
-            class="bg-red-500 px-3 py-1 rounded">Delete</button>
-        </div>
-      </div>
-    `;
+    div.innerHTML+=`
+      <div class="${colorMap[e.category]||"bg-gray-500"} p-4 rounded-xl">
+        <h3>${e.title}</h3>
+        <p>${e.category}</p>
+        <p>${t.toLocaleString()}</p>
+
+        <button onclick="editEvent('${e.id}','${e.title}','${e.email}','${e.event_time}','${e.reminder_time}','${e.category}')">Edit</button>
+        <button onclick="deleteEvent('${e.id}')">Delete</button>
+      </div>`;
   });
 
-  if (div.innerHTML === "") {
-    div.innerHTML = "<p class='text-gray-400'>No events found</p>";
-  }
-
-  document.getElementById("total").innerText = total;
-  document.getElementById("upcoming").innerText = upcoming;
-  document.getElementById("past").innerText = past;
+  totalEl().innerText=total;
+  upcomingEl().innerText=upcoming;
+  pastEl().innerText=past;
 }
 
-// ADD / UPDATE
-async function addEvent() {
-  const token = localStorage.getItem("token");
+function totalEl(){return document.getElementById("total")}
+function upcomingEl(){return document.getElementById("upcoming")}
+function pastEl(){return document.getElementById("past")}
 
-  const title = document.getElementById("title").value;
-  const email = document.getElementById("remail").value;
-  const etime = document.getElementById("etime").value;
-  const rtime = document.getElementById("rtime").value;
+// ADD
+async function addEvent(){
+  const body={
+    title:val("title"),
+    email:val("remail"),
+    event_time:val("etime"),
+    reminder_time:val("rtime"),
+    category:val("category")
+  };
 
-  if (editId) {
-    await fetch(`${API}/events/${editId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body: JSON.stringify({ title, email, event_time: etime, reminder_time: rtime })
-    });
-    alert("Updated ✅");
-    editId = null;
-  } else {
-    await fetch(`${API}/events`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token
-      },
-      body: JSON.stringify({ title, email, event_time: etime, reminder_time: rtime })
-    });
-    alert("Added ✅");
-  }
+  const url = editId ? `${API}/events/${editId}` : `${API}/events`;
 
+  await fetch(url,{
+    method: editId?"PUT":"POST",
+    headers:{
+      "Content-Type":"application/json",
+      Authorization:"Bearer "+localStorage.getItem("token")
+    },
+    body:JSON.stringify(body)
+  });
+
+  editId=null;
   loadEvents();
   showSection("view");
 }
 
+function val(id){return document.getElementById(id).value}
+
 // EDIT
-function editEvent(id, title, email, etime, rtime) {
-  editId = id;
+function editEvent(id,t,e,et,rt,c){
+  editId=id;
   showSection("add");
 
-  document.getElementById("title").value = title;
-  document.getElementById("remail").value = email;
-  document.getElementById("etime").value = etime.slice(0,16);
-  document.getElementById("rtime").value = rtime.slice(0,16);
+  valSet("title",t);
+  valSet("remail",e);
+  valSet("etime",et.slice(0,16));
+  valSet("rtime",rt.slice(0,16));
+  valSet("category",c);
 }
 
+function valSet(id,v){document.getElementById(id).value=v}
+
 // DELETE
-async function deleteEvent(id) {
-  const token = localStorage.getItem("token");
-
-  await fetch(`${API}/events/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: "Bearer " + token }
+async function deleteEvent(id){
+  await fetch(`${API}/events/${id}`,{
+    method:"DELETE",
+    headers:{Authorization:"Bearer "+localStorage.getItem("token")}
   });
-
   loadEvents();
 }
 
-// 📅 CALENDAR
-async function loadCalendar() {
-  const token = localStorage.getItem("token");
-
+// CALENDAR
+async function loadCalendar(){
   const res = await fetch(`${API}/events`, {
-    headers: { Authorization: "Bearer " + token }
+    headers:{Authorization:"Bearer "+localStorage.getItem("token")}
   });
 
   const data = await res.json();
 
-  const events = data.map(e => ({
-    title: e.title,
-    start: e.event_time
+  const colorMap = {
+    Work:"blue",
+    Personal:"green",
+    Urgent:"red",
+    Other:"gray"
+  };
+
+  const events = data.map(e=>({
+    title:e.title,
+    start:e.event_time,
+    color:colorMap[e.category]||"gray"
   }));
 
-  const calendarEl = document.getElementById("calendar");
-  calendarEl.innerHTML = "";
+  const el=document.getElementById("calendar");
+  el.innerHTML="";
 
-  const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    height: "auto",
-    events: events
-  });
-
-  calendar.render();
+  new FullCalendar.Calendar(el,{
+    initialView:'dayGridMonth',
+    height:600,
+    events
+  }).render();
 }

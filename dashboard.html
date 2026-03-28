@@ -5,7 +5,7 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- FullCalendar -->
+  <!-- Calendar -->
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
 </head>
@@ -18,11 +18,11 @@
   <div class="w-64 bg-gray-800 p-5 space-y-4">
     <h2 class="text-2xl font-bold">📅 Event App</h2>
 
-    <button onclick="showSection('dashboard')" class="w-full text-left p-2 hover:bg-gray-700 rounded">📊 Dashboard</button>
-    <button onclick="showSection('add')" class="w-full text-left p-2 hover:bg-gray-700 rounded">➕ Add Event</button>
-    <button onclick="showSection('view')" class="w-full text-left p-2 hover:bg-gray-700 rounded">📋 View Events</button>
-    <button onclick="showSection('calendar')" class="w-full text-left p-2 hover:bg-gray-700 rounded">📅 Calendar</button>
-    <button onclick="logout()" class="w-full text-left p-2 hover:bg-red-600 rounded">🚪 Logout</button>
+    <button onclick="showSection('dashboard')" class="block w-full text-left p-2 hover:bg-gray-700 rounded">📊 Dashboard</button>
+    <button onclick="showSection('add')" class="block w-full text-left p-2 hover:bg-gray-700 rounded">➕ Add Event</button>
+    <button onclick="showSection('view')" class="block w-full text-left p-2 hover:bg-gray-700 rounded">📋 View Events</button>
+    <button onclick="showSection('calendar')" class="block w-full text-left p-2 hover:bg-gray-700 rounded">📅 Calendar</button>
+    <button onclick="logout()" class="block w-full text-left p-2 hover:bg-red-600 rounded">🚪 Logout</button>
   </div>
 
   <!-- Main -->
@@ -30,51 +30,54 @@
 
     <!-- Dashboard -->
     <div id="dashboardSection">
-      <h2 class="text-2xl font-bold mb-4">📊 Stats</h2>
+      <h2 class="text-2xl mb-4">📊 Stats</h2>
 
       <div class="grid grid-cols-3 gap-4">
         <div class="bg-gray-800 p-5 rounded-xl">
           <p>Total</p>
-          <h1 id="total" class="text-3xl font-bold">0</h1>
+          <h1 id="total" class="text-3xl">0</h1>
         </div>
 
         <div class="bg-green-600 p-5 rounded-xl">
           <p>Upcoming</p>
-          <h1 id="upcoming" class="text-3xl font-bold">0</h1>
+          <h1 id="upcoming" class="text-3xl">0</h1>
         </div>
 
         <div class="bg-red-600 p-5 rounded-xl">
           <p>Past</p>
-          <h1 id="past" class="text-3xl font-bold">0</h1>
+          <h1 id="past" class="text-3xl">0</h1>
         </div>
       </div>
     </div>
 
-    <!-- Add Event -->
+    <!-- Add -->
     <div id="addSection" class="hidden">
-      <h2 class="text-2xl font-bold mb-4">Add Event</h2>
+      <h2 class="text-2xl mb-4">Add Event</h2>
 
       <div class="space-y-3 max-w-md">
-        <input id="title" placeholder="Event Title" class="w-full p-2 rounded bg-gray-800">
-        <input id="remail" placeholder="Reminder Email" class="w-full p-2 rounded bg-gray-800">
+        <input id="title" placeholder="Title" class="w-full p-2 rounded bg-gray-800">
+        <input id="remail" placeholder="Email" class="w-full p-2 rounded bg-gray-800">
         <input id="etime" type="datetime-local" class="w-full p-2 rounded bg-gray-800">
         <input id="rtime" type="datetime-local" class="w-full p-2 rounded bg-gray-800">
 
-        <button onclick="addEvent()" class="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">
-          Save Event
-        </button>
+        <!-- Category -->
+        <select id="category" class="w-full p-2 rounded bg-gray-800">
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Urgent">Urgent</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <button onclick="addEvent()" class="bg-blue-500 px-4 py-2 rounded">Save</button>
       </div>
     </div>
 
-    <!-- View Events -->
+    <!-- View -->
     <div id="viewSection" class="hidden">
-      <h2 class="text-2xl font-bold mb-4">Your Events</h2>
+      <h2 class="text-2xl mb-4">Events</h2>
 
-      <!-- Search + Filter -->
       <div class="flex gap-3 mb-4">
-        <input id="search" placeholder="Search events..."
-          class="p-2 rounded bg-gray-800 w-full"
-          oninput="loadEvents()">
+        <input id="search" placeholder="Search..." class="p-2 rounded bg-gray-800 w-full" oninput="loadEvents()">
 
         <select id="filter" class="p-2 rounded bg-gray-800" onchange="loadEvents()">
           <option value="all">All</option>
@@ -83,13 +86,13 @@
         </select>
       </div>
 
-      <div id="events" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      <div id="events" class="grid gap-4"></div>
     </div>
 
     <!-- Calendar -->
     <div id="calendarSection" class="hidden">
-      <h2 class="text-2xl font-bold mb-4">📅 Calendar View</h2>
-      <div id="calendar" class="bg-white text-black p-3 rounded-xl"></div>
+      <h2 class="text-2xl mb-4">📅 Calendar</h2>
+      <div id="calendar" class="bg-white text-black p-3 rounded-xl min-h-[600px]"></div>
     </div>
 
   </div>
