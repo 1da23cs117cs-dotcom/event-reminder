@@ -37,14 +37,19 @@ async function createTables() {
         title TEXT,
         email TEXT,
         event_time TIMESTAMP,
-        reminder_time TIMESTAMP,
-        category TEXT DEFAULT 'General'
+        reminder_time TIMESTAMP
       );
     `);
 
-    console.log("✅ Tables created");
+    // ✅ ADD THIS (VERY IMPORTANT)
+    await pool.query(`
+      ALTER TABLE events 
+      ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General';
+    `);
+
+    console.log("✅ Tables ready");
   } catch (err) {
-    console.error("❌ Table creation error:", err);
+    console.error("❌ Table error:", err);
   }
 }
 
