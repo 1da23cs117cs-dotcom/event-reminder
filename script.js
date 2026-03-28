@@ -4,7 +4,6 @@ let editId = null;
 
 // ================= AUTH =================
 
-// Signup
 async function signup() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -19,7 +18,6 @@ async function signup() {
   alert(data.message || data.error);
 }
 
-// Login
 async function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -43,31 +41,19 @@ async function login() {
 // ================= DASHBOARD =================
 
 function init() {
-  checkAuth();
+  if (!localStorage.getItem("token")) {
+    window.location.href = "index.html";
+  }
   showSection("dashboard");
   loadEvents();
 }
 
-function checkAuth() {
-  if (!localStorage.getItem("token")) {
-    window.location.href = "index.html";
-  }
-}
-
 function showSection(section) {
-  const d = document.getElementById("dashboardSection");
-  const a = document.getElementById("addSection");
-  const v = document.getElementById("viewSection");
+  document.getElementById("dashboardSection").classList.add("hidden");
+  document.getElementById("addSection").classList.add("hidden");
+  document.getElementById("viewSection").classList.add("hidden");
 
-  if (!d || !a || !v) return;
-
-  d.style.display = "none";
-  a.style.display = "none";
-  v.style.display = "none";
-
-  if (section === "dashboard") d.style.display = "block";
-  if (section === "add") a.style.display = "block";
-  if (section === "view") v.style.display = "block";
+  document.getElementById(section + "Section").classList.remove("hidden");
 }
 
 function logout() {
@@ -77,21 +63,18 @@ function logout() {
 
 // ================= EVENTS =================
 
-// Load events
 async function loadEvents() {
   const token = localStorage.getItem("token");
 
   const res = await fetch(`${API}/events`, {
     headers: {
-      "Authorization": `Bearer ${token}`
+      Authorization: "Bearer " + token
     }
   });
 
   const data = await res.json();
 
   const div = document.getElementById("events");
-  if (!div) return;
-
   div.innerHTML = "";
 
   let total = 0, upcoming = 0, past = 0;
@@ -100,17 +83,25 @@ async function loadEvents() {
     total++;
 
     const time = new Date(e.event_time);
-
     if (time > new Date()) upcoming++;
     else past++;
 
     div.innerHTML += `
-      <div class="event">
-        <b>${e.title}</b><br>
-        ${time.toLocaleString()}<br><br>
+      <div class="bg-gray-800 p-4 rounded-xl">
+        <h3 class="text-xl font-bold">${e.title}</h3>
+        <p class="text-gray-400">${time.toLocaleString()}</p>
 
-        <button onclick="editEvent('${e.id}', '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')">Edit</button>
-        <button onclick="deleteEvent('${e.id}')">Delete</button>
+        <div class="mt-3 space-x-2">
+          <button onclick="editEvent('${e.id}', '${e.title}', '${e.email}', '${e.event_time}', '${e.reminder_time}')"
+            class="bg-yellow-500 px-3 py-1 rounded">
+            Edit
+          </button>
+
+          <button onclick="deleteEvent('${e.id}')"
+            class="bg-red-500 px-3 py-1 rounded">
+            Delete
+          </button>
+        </div>
       </div>
     `;
   });
@@ -120,7 +111,6 @@ async function loadEvents() {
   document.getElementById("past").innerText = past;
 }
 
-// Add / Update
 async function addEvent() {
   const token = localStorage.getItem("token");
 
@@ -134,17 +124,12 @@ async function addEvent() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        Authorization: "Bearer " + token
       },
-      body: JSON.stringify({
-        title,
-        email,
-        event_time: etime,
-        reminder_time: rtime
-      })
+      body: JSON.stringify({ title, email, event_time: etime, reminder_time: rtime })
     });
 
-    alert("Event Updated ✅");
+    alert("Updated ✅");
     editId = null;
 
   } else {
@@ -152,24 +137,18 @@ async function addEvent() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+        Authorization: "Bearer " + token
       },
-      body: JSON.stringify({
-        title,
-        email,
-        event_time: etime,
-        reminder_time: rtime
-      })
+      body: JSON.stringify({ title, email, event_time: etime, reminder_time: rtime })
     });
 
-    alert("Event Added ✅");
+    alert("Added ✅");
   }
 
   loadEvents();
   showSection("view");
 }
 
-// Edit
 function editEvent(id, title, email, etime, rtime) {
   editId = id;
 
@@ -181,14 +160,13 @@ function editEvent(id, title, email, etime, rtime) {
   document.getElementById("rtime").value = rtime.slice(0,16);
 }
 
-// Delete
 async function deleteEvent(id) {
   const token = localStorage.getItem("token");
 
   await fetch(`${API}/events/${id}`, {
     method: "DELETE",
     headers: {
-      "Authorization": `Bearer ${token}`
+      Authorization: "Bearer " + token
     }
   });
 

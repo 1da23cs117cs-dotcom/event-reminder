@@ -2,19 +2,19 @@
 <html>
 <head>
   <title>Event Reminder</title>
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
+<body class="bg-gray-900 flex items-center justify-center h-screen">
 
-<div class="container">
-  <h2>📅 Event Reminder</h2>
+<div class="bg-gray-800 p-8 rounded-xl w-80 text-center">
+  <h2 class="text-2xl mb-4 text-white">📅 Event Reminder</h2>
 
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
+  <input id="email" placeholder="Email" class="w-full p-2 mb-3 rounded bg-gray-700 text-white">
+  <input id="password" type="password" placeholder="Password" class="w-full p-2 mb-3 rounded bg-gray-700 text-white">
 
-  <button onclick="login()">Login</button>
-  <button onclick="signup()">Signup</button>
+  <button onclick="login()" class="bg-blue-500 w-full p-2 rounded mb-2 hover:bg-blue-600">Login</button>
+  <button onclick="signup()" class="bg-green-500 w-full p-2 rounded hover:bg-green-600">Signup</button>
 </div>
 
 <script src="script.js"></script>

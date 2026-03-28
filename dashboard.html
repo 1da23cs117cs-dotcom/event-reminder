@@ -2,53 +2,68 @@
 <html>
 <head>
   <title>Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body onload="init()">
+<body class="bg-gray-900 text-white" onload="init()">
 
-<div class="layout">
+<div class="flex h-screen">
 
   <!-- Sidebar -->
-  <div class="sidebar">
-    <h2>📅</h2>
+  <div class="w-64 bg-gray-800 p-5 space-y-4">
+    <h2 class="text-2xl font-bold">📅 Event App</h2>
 
-    <button onclick="showSection('dashboard')">📊 Dashboard</button>
-    <button onclick="showSection('add')">➕ Add / Edit Event</button>
-    <button onclick="showSection('view')">📋 View Events</button>
-    <button onclick="logout()">🚪 Logout</button>
+    <button onclick="showSection('dashboard')" class="w-full text-left p-2 hover:bg-gray-700 rounded">📊 Dashboard</button>
+    <button onclick="showSection('add')" class="w-full text-left p-2 hover:bg-gray-700 rounded">➕ Add Event</button>
+    <button onclick="showSection('view')" class="w-full text-left p-2 hover:bg-gray-700 rounded">📋 View Events</button>
+    <button onclick="logout()" class="w-full text-left p-2 hover:bg-red-600 rounded">🚪 Logout</button>
   </div>
 
   <!-- Main -->
-  <div class="main">
+  <div class="flex-1 p-6 overflow-y-auto">
 
-    <!-- Stats -->
+    <!-- Dashboard -->
     <div id="dashboardSection">
-      <h2>📊 Stats</h2>
+      <h2 class="text-2xl font-bold mb-4">📊 Stats</h2>
 
-      <div class="stats">
-        <div class="card">Total<br><span id="total">0</span></div>
-        <div class="card">Upcoming<br><span id="upcoming">0</span></div>
-        <div class="card">Past<br><span id="past">0</span></div>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-gray-800 p-5 rounded-xl">
+          <p>Total</p>
+          <h1 id="total" class="text-3xl font-bold">0</h1>
+        </div>
+
+        <div class="bg-green-600 p-5 rounded-xl">
+          <p>Upcoming</p>
+          <h1 id="upcoming" class="text-3xl font-bold">0</h1>
+        </div>
+
+        <div class="bg-red-600 p-5 rounded-xl">
+          <p>Past</p>
+          <h1 id="past" class="text-3xl font-bold">0</h1>
+        </div>
       </div>
     </div>
 
-    <!-- Add/Edit -->
-    <div id="addSection" style="display:none;">
-      <h2>Add / Edit Event</h2>
+    <!-- Add Event -->
+    <div id="addSection" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Add Event</h2>
 
-      <input id="title" placeholder="Event Title">
-      <input id="remail" placeholder="Reminder Email">
-      <input id="etime" type="datetime-local">
-      <input id="rtime" type="datetime-local">
+      <div class="space-y-3 max-w-md">
+        <input id="title" placeholder="Event Title" class="w-full p-2 rounded bg-gray-800">
+        <input id="remail" placeholder="Reminder Email" class="w-full p-2 rounded bg-gray-800">
+        <input id="etime" type="datetime-local" class="w-full p-2 rounded bg-gray-800">
+        <input id="rtime" type="datetime-local" class="w-full p-2 rounded bg-gray-800">
 
-      <button onclick="addEvent()">Save Event</button>
+        <button onclick="addEvent()" class="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600">
+          Save Event
+        </button>
+      </div>
     </div>
 
-    <!-- View -->
-    <div id="viewSection" style="display:none;">
-      <h2>Your Events</h2>
-      <div id="events"></div>
+    <!-- View Events -->
+    <div id="viewSection" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Your Events</h2>
+      <div id="events" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 
   </div>
